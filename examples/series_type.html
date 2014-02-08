@@ -1,0 +1,161 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./examples.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	(function(){
+		var div_id = "chart1-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff();
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "Line Chart Sample1";
+		c.default_series_type = "line";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart1-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff({cnt:100});
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "Line Chart Sample2";
+		c.default_series_type = "line";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart2-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff({cnt:5,series_num:2});
+		var c = new ccd3.Chart(div_id,data);
+		c.default_series_type = "bar";
+		c.title = "Bar Chart Sample1";
+		c.render();
+	})();
+
+	(function(){
+		var div_id = "chart2-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.sin_cos_tan();
+		data.pop();  // remove tan
+		var c = new ccd3.Chart(div_id,data);
+		c.default_series_type = "bar";
+		c.title = "Bar Chart Sample2";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart3-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff({cnt:5,series_num:2});
+		for(var i=0;i<data.length;i++){ data[i].series_type="stackedbar"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "StackedBar Chart Sample1";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart3-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff({cnt:50,series_num:12});
+		for(var i=0;i<data.length;i++){ data[i].series_type="stackedbar"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "StackedBar Chart Sample2";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart3-3";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.sin_cos_tan();
+		data[0].series_type = "stackedbar";
+		data[1].series_type = "stackedbar";
+		data.pop(); // remove tan
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "StackedBar Chart Sample3";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart4-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.correlative_xyz({scale:1000,series_num:2,cnt:5});
+		for(var i=0;i<data.length;i++){ data[i].series_type="scatter"; }
+		var c = new ccd3.Chart(div_id,data);
+		//c.scale.xScale = d3.scale.linear();
+		//c.axis.format.xFormat = function(d){ return ccd3.default_numeric_format(d); }
+		c.title = "Scatter Chart Sample";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart4-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.correlative_xyz({scale:1000000});
+		for(var i=0;i<data.length;i++){ data[i].series_type="scatter"; }
+		var c = new ccd3.Chart(div_id,data);
+		//c.scale.xScale = d3.scale.linear();
+		//c.axis.format.xFormat = function(d){ return ccd3.default_numeric_format(d); }
+		c.title = "Scatter Chart Sample";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart5-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.correlative_xyz();
+		for(var i=0;i<data.length;i++){ data[i].series_type="bubble"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "Bubble Chart Sample1";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart5-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.correlative_xyz({cnt:5,series_num:2,scale:1.0});
+		for(var i=0;i<data.length;i++){ data[i].series_type="bubble"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "Bubble Chart Sample2";
+		//c.scale.domain.y_margin_rate = 0.25;
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart6-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_weekday({series_num:2,scale:1.0});
+		for(var i=0;i<data.length;i++){ data[i].series_type="bar"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "Bar Chart with name label";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart6-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_weekday({series_num:2,scale:1.0});
+		for(var i=0;i<data.length;i++){ data[i].series_type="stackedbar"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title = "StackedBar Chart with name label";
+		c.render();
+	})();
+
+
+};
+-->
+		</script>
+	</head>
+	<body>
+		<h1>ccd3 series_type examples</h1>
+		<a href="./index.html">back to index</a>
+		<div id="charts"></div>
+	</body>
+</html>

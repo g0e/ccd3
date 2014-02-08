@@ -1,0 +1,56 @@
+.ccd3{
+	font-size:12px;
+	font-family:'Lucida Grande','Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+}
+
+/* text color */
+.ccd3 text{
+	fill: black;
+}
+
+/* chart grid */
+.ccd3_xAxis .tick line,
+.ccd3_yAxis .tick line,
+.ccd3_xAxis path,
+.ccd3_yAxis path{
+	fill: none;
+	stroke: lightgray;
+	stroke-width: 1;
+}
+
+/* tooltip */
+.ccd3_tooltip{
+	padding: 5px;
+	background-color: white;
+	font-size: 12px;
+	position: absolute;
+	z-index: 10;
+}
+
+/* zoom brush function */
+.ccd3_brush{
+	fill: gray;
+	opacity: 0.3;
+	stroke: gray;
+	stroke-width: 2;
+}
+
+/* [clear zoom] button */
+.ccd3_brush_reset_button text{
+	font-size:12px;
+	fill: #333333;
+}
+.ccd3_brush_reset_button rect{
+	fill: lightgray;
+	opacity: 0.7;
+	stroke: none;
+}
+
+.ccd3_title{
+	font-size: 18px;
+}
+
+.ccd3_bar_g{
+	font-size: 10px;
+}
+

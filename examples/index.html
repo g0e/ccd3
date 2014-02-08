@@ -1,0 +1,79 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=8;IE=9"/>
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<style type="text/css">
+<!--
+#charts > div{
+	float:left;
+}
+-->
+		</style>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	(function(){
+		var div_id = "chart1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		/* prepare dataset */
+		//var data = ccd3_dataset.random_xylabel({cnt:10});
+		var data = ccd3_dataset.random_diff({series_num:3, cnt:10});
+		data = ccd3.Util.swap_dataset_xy(data);
+		//data[0].color = "#999999";
+		//data[0].series_type = "bubble";
+		//data[1].series_type = "bar";
+		/* create Chart Object */
+		
+		var c = new ccd3.Chart(div_id,data);
+		//c.show_values = "always";
+		
+		/* customize chart */
+		c.title.text = "Sample Chart1";
+		c.default_series_type = "stackedbar";
+		c.stack_type = "expand";
+		//c.yAxis.domain_min = 0;
+		//c.yAxis.domain_max = 1;
+		c.xAxis.domain_min = 0;
+		c.xAxis.domain_max = 1;
+		//c.legend.show = false;
+		//c.tooltip.show = false;
+		//c.show_xAxis = false;
+		c.show_values = "always";
+		//c.show_yAxis = false;
+		//c.scale.xScale = d3.scale.linear();
+		//c.scale.domain = {y_min:0, y_margin_rate: 0.0};
+		//c.axis.format.xFormat = function(d){ return d3.time.format("%m/%d")(new Date(d)) };
+		
+		c.height = 480;
+		c.width = 480;
+		c.xLabel.text = "hogeeeee";
+		c.yLabel.text = "piyopiyo";
+		//c.zoomable = false;
+		//c.show_legend = false;
+		//c.show_tooltip = false;
+		//c.show_values = "always";
+		
+		/* render chart */
+		c.render();
+	})();
+};
+-->
+		</script>
+	</head>
+	<body>
+		<h1>ccd3 sample charts</h1>
+		<ul>
+			<li><a href="./series_type.html">series_type examples</a></li>
+			<li><a href="./complex_series_type.html">complex series_type examples</a></li>
+			<li><a href="./axis_format.html">axis format examples</a></li>
+			<li><a href="./form_ajax.html">form ajax examples</a></li>
+			<li><a href="./black_background.html">black background example</a></li>
+		</ul>
+		<div id="charts"></div>
+	</body>
+</html>

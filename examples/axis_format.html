@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./examples.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	
+	render_scale = function(s){
+		var s2 = (""+s).replace(".","");
+		var div_id = "chart"+s2;
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_diff({cnt:6,scale:s,series_num:2});
+		for(var i=0;i<data.length;i++){ data[i].series_type="bar"; }
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = "Axis Format Sample1("+s2+")";
+		c.yLabel.text = "Random Value";
+		c.xLabel.text = "Date Sequence";
+		c.render();
+	};
+	[1000*1000*1000*1000, 1000*1000, 1000*10, 1000, 10, 1, 0.1, 0.01].forEach(function(d){ render_scale(d); })
+};
+-->
+		</script>
+	</head>
+	<body>
+		<h1>ccd3 series_type examples</h1>
+		<a href="./index.html">back to index</a>
+		<div id="charts"></div>
+	</body>
+</html>

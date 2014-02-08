@@ -1,0 +1,108 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./examples.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	(function(){
+		var div_id = "chart1";
+		d3.select("#chart_func").append("div").attr("id",div_id).style("margin","20px");
+		
+		var c = new ccd3.Chart(div_id);
+		c.default_series_type = "stackedbar";
+		c.title = "dataset reload by javascript-function";
+		c.loader.source = ccd3_dataset.random_diff;
+		c.loader.params = {cnt:20, series_num:2, scale:10};
+		c.loader.before_filter = function(params){
+			if(params["cnt"] < 10){
+				params["cnt"] = 10;
+			}
+			return params;
+		};
+		c.loader.after_filter = function(dataset){
+			return dataset;
+		};
+		c.load();
+		
+		d3.select("#func_form")
+			.on("submit",function(e){
+				var values = {};
+				d3.select(this).selectAll("input")
+					.each(function(){
+						var f = d3.select(this);
+						if(f.attr("name") && f.property("value")){
+							values[f.attr("name")] = f.property("value");
+						}
+					})
+				c.load(values);
+			});
+	})();
+	
+	(function(){
+		var div_id = "chart2";
+		d3.select("#chart_ajax").append("div").attr("id",div_id).style("margin","20px");
+		
+		var c = new ccd3.Chart(div_id);
+		c.title = "dataset ajax reload";
+		c.default_series_type = "line";
+		c.loader.source = "./../data_source/sample_json.py";
+		c.loader.params = {cnt:20, series_num:2, scale:10};
+		c.loader.before_filter = function(url,params,func){
+			return func(url,params);
+		};
+		c.loader.after_filter = function(dataset){
+			dataset[0].visible = false;
+			return dataset;
+		};
+		c.load();
+		
+		d3.select("#ajax_form")
+			.on("submit",function(e){
+				var values = {};
+				d3.select(this).selectAll("input")
+					.each(function(){
+						var f = d3.select(this);
+						if(f.attr("name") && f.property("value")){
+							values[f.attr("name")] = f.property("value");
+						}
+					})
+				c.load(values);
+			});
+		
+	})();
+
+};
+-->
+		</script>
+	</head>
+	<body>
+		<h1>ccd3 form & ajax loading examples</h1>
+		<a style="float:clear;" href="./index.html">back to index</a>
+		<div style="float:left;">
+			<div id="chart_func">
+			</div>
+			<form id="func_form" onsubmit="return false;">
+				series_num:<input type="text" name="series_num" size=5 />
+				cnt:<input type="text" name="cnt" size=5 />
+				scale:<input type="text" name="scale" size=5/>
+				<input type="submit" name="reload">
+			</form>
+		</div>
+		<div style="float:left;">
+			<div id="chart_ajax">
+			</div>
+			<form id="ajax_form" onsubmit="return false;">
+				series_num:<input type="text" name="series_num" size=5 />
+				cnt:<input type="text" name="cnt" size=5 />
+				scale:<input type="text" name="scale" size=5/>
+				<input type="submit" name="reload">
+			</form>
+		</div>
+	</body>
+</html>
