@@ -6,6 +6,9 @@ ccd3
 * Javascript chart library for d3.js
 * MIT License
 
+## Version
+* latest stable release 0.9.0
+
 ## Requirements
 * depends only on d3.js(>=3.4.1)
 * work with Chrome,Firefox,Safari
