@@ -22,8 +22,8 @@ window.onload = function(){
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
 		/* prepare dataset */
 		//var data = ccd3_dataset.random_xylabel({cnt:10});
-		var data = ccd3_dataset.random_diff({series_num:3, cnt:10});
-		data = ccd3.Util.swap_dataset_xy(data);
+		var data = ccd3_dataset.random_xylabel({series_num:3, cnt:20});
+		//data = ccd3.Util.swap_dataset_xy(data);
 		//data[0].color = "#999999";
 		//data[0].series_type = "bubble";
 		//data[1].series_type = "bar";
@@ -34,16 +34,18 @@ window.onload = function(){
 		
 		/* customize chart */
 		c.title.text = "Sample Chart1";
-		c.default_series_type = "stackedbar";
-		c.stack_type = "expand";
+		c.default_series_type = "bubble";
+		//c.xAxis.band_padding = 0;
+		//c.yAxis.band_padding = 0;
+		//c.stack_type = "expand";
 		//c.yAxis.domain_min = 0;
 		//c.yAxis.domain_max = 1;
-		c.xAxis.domain_min = 0;
-		c.xAxis.domain_max = 1;
+		//c.xAxis.domain_min = 0;
+		//c.xAxis.domain_max = 1;
 		//c.legend.show = false;
 		//c.tooltip.show = false;
 		//c.show_xAxis = false;
-		c.show_values = "always";
+		//c.show_values = "always";
 		//c.show_yAxis = false;
 		//c.scale.xScale = d3.scale.linear();
 		//c.scale.domain = {y_min:0, y_margin_rate: 0.0};
@@ -70,6 +72,7 @@ window.onload = function(){
 		<ul>
 			<li><a href="./series_type.html">series_type examples</a></li>
 			<li><a href="./complex_series_type.html">complex series_type examples</a></li>
+			<li><a href="./heatmap.html">heatmap examples</a></li>
 			<li><a href="./axis_format.html">axis format examples</a></li>
 			<li><a href="./form_ajax.html">form ajax examples</a></li>
 			<li><a href="./black_background.html">black background example</a></li>

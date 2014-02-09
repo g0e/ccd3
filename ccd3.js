@@ -57,7 +57,10 @@ var ccd3 = function(){
 		this.tooltip = { show:true };
 		this.zoom = { use:true };
 		this.series = [];
-		this.series_options = { scatter:{}, bar:{}, stackedbar:{}, line:{}, bubble:{} };
+		this.series_options = {};
+		for (var key in ccd3.Parts.Series.type_info()) {
+			this.series_options[key] = {};
+		}
 		
 		// ccd3.DatasetManager holder
 		this.dataset_manager = {};
@@ -101,6 +104,13 @@ var ccd3 = function(){
 					"#2980b9","#c0392b","#27ae60","#f39c12","#d35400","#16a085"];
 			}
 			
+			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
+				this.dataset_manager = new ccd3.DatasetManager(this);
+			}
+			this.dataset = this.dataset_manager.setup(this.dataset);
+			// must execute before execute this.init_parts()
+			this.setup_options(this.dataset_manager.options_from_dataset());
+			
 			if(this.svg===undefined){
 				this.svg = d3.select("#"+this.div_id)
 					.append("svg")
@@ -110,39 +120,33 @@ var ccd3 = function(){
 					.attr("height",this.height)
 					;
 			}
-			
 			this.inner_width = this.width;
 			this.inner_height = this.height;
-			
-			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
-				this.dataset_manager = new ccd3.DatasetManager(this);
-			}
-			this.dataset = this.dataset_manager.setup(this.dataset);
 			
 			this.init_parts();
 			
 			this.title.render();
 			this.xLabel.render();
 			this.yLabel.render();
-		
+			
 			this.title.arrange(this.width/2,this.title.height/2);
 			this.xLabel.arrange(this.width/2,this.height - this.xLabel.height/2);
 			this.yLabel.arrange(this.yLabel.width/2,this.height/2);
-		
+			
 			this.xAxis.scale_type = this.dataset_manager.detect_scale_type(function(d){return d.x;});
 			this.xAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.x;});
 			this.yAxis.scale_type = this.dataset_manager.detect_scale_type(function(d){return d.y;});
 			this.yAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.y;});
-			if(this.direction===undefined){
-				var series_directive = this.dataset_manager.has_directive_series_type();
-				if(!series_directive && this.yAxis.scale_type === "linear" && this.xAxis.scale_type === "linear"){
-					this.direction = null;
-				}else if(this.yAxis.scale_type === "ordinal" || this.yAxis.scale_type === "date"){
-					this.direction = "y";
-				}else{
-					this.direction = "x";
-				}
+			
+			var series_directive = this.dataset_manager.has_directive_series_type();
+			if(!series_directive && this.yAxis.scale_type === "linear" && this.xAxis.scale_type === "linear"){
+				this.direction = null;
+			}else if(this.yAxis.scale_type === "ordinal" || this.yAxis.scale_type === "date"){
+				this.direction = "y";
+			}else{
+				this.direction = "x";
 			}
+			
 			this.xAxis.init_scale();
 			this.yAxis.init_scale();
 		
@@ -281,6 +285,9 @@ var ccd3 = function(){
 							break;
 						case "bubble": 
 							this.series[i] = new ccd3.Parts.Series.Bubble(this,this.series_options.bubble);
+							break;
+						case "heatmap": 
+							this.series[i] = new ccd3.Parts.Series.Heatmap(this,this.series_options.heatmap);
 							break;
 					}
 				}
@@ -684,6 +691,8 @@ var ccd3 = function(){
 			domain_max: undefined,
 			domain_min: undefined,
 			domain_margin: 0.1,
+			domain_margin_type: undefined, // switch using domain_margin or min_step
+			band_padding: 0.2, // also ref from Series.Bar/StackedBar
 			format: undefined,
 			show_label: true,
 			tick_num: undefined,
@@ -706,7 +715,7 @@ var ccd3 = function(){
 		}else if(this.scale_type === "ordinal"){
 			this.format = function(d){ return d; };
 		}else{
-			throw new TypeError("Invalid scale_type");
+			throw new Error("Invalid scale_type");
 		}
 	};
 	ccd3.Parts.Axis.prototype.init_scale = function(){
@@ -722,7 +731,7 @@ var ccd3 = function(){
 	ccd3.Parts.Axis.prototype.reset_range = function(range_max){
 		this.range_max = range_max;
 		if(this.scale_type === "ordinal"){
-			this.scale.rangeRoundBands([this.range_min, this.range_max], 0.1); //TODO option
+			this.scale.rangeRoundBands([this.range_min, this.range_max], this.band_padding);
 		}else{
 			this.scale.range([this.range_min, this.range_max]);
 		}
@@ -756,7 +765,7 @@ var ccd3 = function(){
 			if(min === undefined || max === undefined){
 				min = undefined;
 				max = undefined;
-			}else if(this.direction !== this.chart.direction){
+			}else if(this.direction !== this.chart.direction && this.domain_margin_type !== "grid"){
 				if(min > 0 && min - (max-min)*this.domain_margin < 0){
 					min = 0;
 				}else{
@@ -983,6 +992,16 @@ var ccd3 = function(){
 	/* ------------------------------------------------------------------ */
 
 	ccd3.Parts.Series = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.Series.type_info = function(){
+		return {
+			heatmap:	{ zindex: 1 },
+			bar:		{ zindex: 2 },
+			stackedbar:	{ zindex: 3 },
+			bubble:		{ zindex: 4 },
+			line:		{ zindex: 5 },
+			scatter:	{ zindex: 6 }
+		};
+	};
 	ccd3.Parts.Series.prototype = new ccd3.Parts();
 	ccd3.Parts.Series.prototype.get_defaults = function(){
 		return {
@@ -997,14 +1016,8 @@ var ccd3 = function(){
 	ccd3.Parts.Series.prototype.render = function(){};
 	ccd3.Parts.Series.prototype.init_svg = function(series){
 		this.series = series;
-		var type_order = { // move layer like z-index
-			"bar":1,
-			"stackedbar":2,
-			"bubble":3,
-			"line":4,
-			"scatter":5
-		};
 		if(!(this.svg)){
+			var st = ccd3.Parts.Series.type_info();
 			this.svg = this.chart.series_container.svg
 				.append("g")
 				.attr("id","series_"+series.series_num)
@@ -1013,7 +1026,7 @@ var ccd3 = function(){
 				.attr("series_name",series.name)
 				.attr("class",this.class_name)
 				.attr("series_type",series.series_type)
-				.datum(type_order[series.series_type]*1000+series.series_num) // magic number 1000
+				.datum(st[series.series_type].zindex * 1000 + series.series_num) // magic number 1000
 				;
 		}
 	};
@@ -1155,8 +1168,7 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Bar.prototype = new ccd3.Parts.Series();
 	ccd3.Parts.Series.Bar.prototype.get_defaults = function(){
 		return {
-			opacity: 0.7,
-			bar_margin: 0.05
+			opacity: 0.7
 		};
 	};
 	ccd3.Parts.Series.Bar.prototype.render = function(bar_cnt,bar_pos){
@@ -1165,6 +1177,7 @@ var ccd3 = function(){
 		var text_visibility = this.text_visibility();
 		var wScale,hScale,format,hAxis,wAxis,width;
 		var xy_func, width_func, height_func, value_func, text_xy_func;
+		var band_padding;
 		this.color = this.chart._color(i);
 		
 		if(this.chart.direction === "x"){
@@ -1173,12 +1186,14 @@ var ccd3 = function(){
 			wAxis = this.chart.xAxis;
 			hAxis = this.chart.yAxis;
 			format = this.chart.yAxis.format;
+			band_padding = this.chart.xAxis.band_padding;
 		}else{
 			wScale = this.chart.yAxis.scale;	
 			hScale = this.chart.xAxis.scale;
 			wAxis = this.chart.yAxis;
 			hAxis = this.chart.xAxis;
 			format = this.chart.xAxis.format;
+			band_padding = this.chart.yAxis.band_padding;
 		}
 		
 		if(wAxis.scale_type === "ordinal"){
@@ -1186,14 +1201,14 @@ var ccd3 = function(){
 		}else{
 			width = Math.abs(wScale(wAxis.min_step) - wScale(0));
 		}
-		var width2 = width*(1.0-this.bar_margin*2)/bar_cnt;
+		var width2 = width*(1.0-band_padding)/bar_cnt;
 		
 		if(this.chart.direction === "x"){
 			value_func = function(d){ return d.y; };
 			width_func = function(){ return width2; };
 			height_func = function(d){ return Math.abs(hScale(0) - hScale(d.y)); };
 			xy_func = function(d){
-				var x = wScale(d.x) + width2*bar_pos + width*that.bar_margin;
+				var x = wScale(d.x) + width2*bar_pos + width*band_padding/2;
 				if(wAxis.scale_type !== "ordinal"){
 					x -= width/2;
 				}
@@ -1210,7 +1225,7 @@ var ccd3 = function(){
 			width_func = function(d){ return Math.abs(hScale(0) - hScale(d.x)); };
 			height_func = function(){ return width2; };
 			xy_func = function(d){
-				var y = wScale(d.y) + width2*bar_pos + width*that.bar_margin;
+				var y = wScale(d.y) + width2*bar_pos + width*band_padding/2;
 				if(wAxis.scale_type !== "ordinal"){
 					y -= width/2;
 				}
@@ -1295,8 +1310,7 @@ var ccd3 = function(){
 	ccd3.Parts.Series.StackedBar.prototype = new ccd3.Parts.Series();
 	ccd3.Parts.Series.StackedBar.prototype.get_defaults = function(){
 		return {
-			opacity: 0.7,
-			bar_margin: 0.05
+			opacity: 0.7
 		};
 	};
 	ccd3.Parts.Series.StackedBar.prototype.render = function(){
@@ -1305,6 +1319,7 @@ var ccd3 = function(){
 		var text_visibility = this.text_visibility();
 		var wScale,hScale,format,hAxis,wAxis,width;
 		var xy_func, width_func, height_func, value_func, text_xy_func;
+		var band_padding;
 		this.color = this.chart._color(i);
 		
 		if(this.chart.direction === "x"){
@@ -1313,12 +1328,14 @@ var ccd3 = function(){
 			wAxis = this.chart.xAxis;
 			hAxis = this.chart.yAxis;
 			format = this.chart.yAxis.format;
+			band_padding = this.chart.xAxis.band_padding;
 		}else{
 			wScale = this.chart.yAxis.scale;	
 			hScale = this.chart.xAxis.scale;
 			wAxis = this.chart.yAxis;
 			hAxis = this.chart.xAxis;
 			format = this.chart.xAxis.format;
+			band_padding = this.chart.yAxis.band_padding;
 		}
 
 		if(wAxis.scale_type === "ordinal"){
@@ -1326,14 +1343,14 @@ var ccd3 = function(){
 		}else{
 			width = Math.abs(wScale(wAxis.min_step) - wScale(0));
 		}
-		var width2 = width*(1.0-this.bar_margin*2);
+		var width2 = width*(1.0-band_padding);
 		
 		if(this.chart.direction === "x"){
 			value_func = function(d){ return d.y; };
 			width_func = function(){ return width2; };
 			height_func = function(d){ return Math.abs(hScale(d.y0) - hScale(d.y+d.y0)); };
 			xy_func = function(d){
-				var x = wScale(d.x) + width*that.bar_margin;
+				var x = wScale(d.x) + width*band_padding/2;
 				if(wAxis.scale_type !== "ordinal"){
 					x -= width/2;
 				}
@@ -1350,7 +1367,7 @@ var ccd3 = function(){
 			width_func = function(d){ return Math.abs(hScale(d.x0) - hScale(d.x+d.x0)); };
 			height_func = function(){ return width2; };
 			xy_func = function(d){
-				var y = wScale(d.y) + width*that.bar_margin;
+				var y = wScale(d.y) + width*band_padding/2;
 				if(wAxis.scale_type !== "ordinal"){
 					y -= width/2;
 				}
@@ -1674,6 +1691,130 @@ var ccd3 = function(){
 	};
 	
 	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.Series.Heatmap                                         */
+	/* ------------------------------------------------------------------ */
+
+	ccd3.Parts.Series.Heatmap = function(){ ccd3.Parts.Series.apply(this,arguments); };
+	ccd3.Parts.Series.Heatmap.prototype = new ccd3.Parts.Series();
+	ccd3.Parts.Series.Heatmap.prototype.get_defaults = function(){
+		return {
+			low_color: "red",
+			high_color: "green"
+		};
+	};
+	ccd3.Parts.Series.Heatmap.prototype.render = function(){
+		var that = this;
+		var i = this.series.series_num;
+		var text_visibility = this.text_visibility();
+		var xScale = this.chart.xAxis.scale;
+		var yScale = this.chart.yAxis.scale;
+		var xAxis = this.chart.xAxis;
+		var yAxis = this.chart.yAxis;
+		var width,height;
+		this.format = ccd3.Util.default_numeric_format;
+		this.color = this.chart._color(i);
+		var xy_func, text_xy_func;
+		
+		if(xAxis.scale_type === "ordinal"){
+			width = xScale.rangeBand();
+		}else{
+			width = Math.abs(xScale(xAxis.min_step) - xScale(0));
+		}
+		if(yAxis.scale_type === "ordinal"){
+			height = yScale.rangeBand();
+		}else{
+			height = Math.abs(yScale(yAxis.min_step) - yScale(0));
+		}
+		// overloap rect not to make gap
+		width += 1;
+		height += 1;
+		
+		// cScale = color Scale
+		if(this.cScale === undefined){
+			var zMax = this.chart.dataset_manager.get_max(function(d){return d.z;});
+			var zMin = this.chart.dataset_manager.get_min(function(d){return d.z;});
+			// interpolate pattern http://bl.ocks.org/mbostock/3014589
+			this.cScale = d3.scale.linear()
+				.range([this.low_color, this.high_color]).domain([zMin,zMax])
+				.interpolate(d3.interpolateHsl);
+		}
+		var cScale = this.cScale;
+		
+		xy_func = function(d){
+			var x = xScale(d.x);
+			if(xAxis.scale_type !== "ordinal"){
+				x -= width/2;
+			}
+			var y = yScale(d.y);
+			if(yAxis.scale_type !== "ordinal"){
+				y -= height/2;
+			}
+			return "translate("+x+","+y+")";
+		};
+		text_xy_func = function(d){
+			var x=width/2;
+			var y=height/2 + this.getBBox().height/2;
+			return "translate("+x+","+y+")";
+		};
+		
+		// data join
+		var rects = this.svg.selectAll(".ccd3_rect_g").data(that.get_data());
+		
+		// enter
+		rects
+			.enter()
+			.append("g")
+			.attr("class","ccd3_rect_g")
+			.style("opacity",0)
+			.call(function(e){
+				e.append("rect").attr("fill",function(d){ return that.cScale(d.z); });
+			})
+			.call(function(e){
+				e
+				.append("text")
+				.attr("text-anchor","middle")
+				.text(function(d){
+					return that.format(d.z);
+				})
+				;
+			})
+			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			;
+		
+		// update
+		rects
+			.transition().duration(500)
+			.style("opacity",that.opacity)
+			.attr("transform",xy_func)
+			.call(function(e){
+				e
+				.select("rect")
+				.attr("width",width)
+				.attr("height",height)
+				;
+			})
+			.call(function(e){
+				e
+				.select("text")
+				.attr("visibility",function(){ return (text_visibility)? "visible":"hidden"; })
+				.attr("font-size",that.font_size)
+				.attr("transform",text_xy_func);
+			})
+			;
+	
+		// exit
+		rects.call(this.exit);
+
+	};
+	ccd3.Parts.Series.Heatmap.prototype.tooltip_html = function(d){
+		var html = "";
+		html += "x: " + this.chart.xAxis.format(d.x);
+		html += "<br>y: " + this.chart.yAxis.format(d.y);
+		html += "<br>z: " + this.format(d.z);
+		return html;
+	};
+
+	/* ------------------------------------------------------------------ */
 	/*  ccd3.DatasetManager                                               */
 	/* ------------------------------------------------------------------ */
 
@@ -1681,26 +1822,60 @@ var ccd3 = function(){
 		this.chart = chart;
 	};
 	ccd3.DatasetManager.prototype.setup = function(dataset){
+		var i,len;
+		var series_types = ccd3.Parts.Series.type_info();
+		
+		// deep copy dataset
 		this.dataset = ccd3.Util.copy(dataset);
 		this.dataset_original = ccd3.Util.copy(dataset);
 		dataset = this.dataset;
 		
-		for(var i=0,len=dataset.length;i<len;i++){
+		// set default properties
+		for(i=0,len=dataset.length;i<len;i++){
 			dataset[i].series_num = i;
+			if(dataset[i].series_type === undefined){
+				dataset[i].series_type = this.chart.default_series_type;
+			}
 			if(dataset[i].name === undefined){
 				dataset[i].name = "series"+(i+1);
 			}
 			if(dataset[i].visible === undefined){
 				dataset[i].visible = true;
 			}
-			if(dataset[i].series_type === undefined){
-				dataset[i].series_type = this.chart.default_series_type;
-			}
 			if(dataset[i].color !== undefined){
 				this.chart.color_palette[i] = dataset[i].color;
 			}
 		}
+		
+		// check dataset
+		var st_ar = []; // st = series_type
+		for(i=0,len=dataset.length;i<len;i++){
+			if(dataset[i].series_type !== undefined && !(series_types.hasOwnProperty(dataset[i].series_type))){
+				throw new Error("invalid series_type");
+			}
+			st_ar.push(dataset[i].series_type);
+		}
+		if(st_ar.indexOf("heatmap")>=0 && st_ar.length>1){
+			throw new Error("If you use 'heatmap' series_type, you must set only one series in dataset.");
+		}
+		if(st_ar.indexOf("bar")>=0 && st_ar.indexOf("stackedbar")>=0){
+			throw new Error("You can't use 'bar' and 'stackedbar' series_type at the same time.");
+		}
+		
 		return dataset;
+	};
+	ccd3.DatasetManager.prototype.options_from_dataset = function(){
+		var options = {};
+		
+		if(this.dataset[0].series_type === "heatmap"){
+			options = {
+				legend: { show: false },
+				xAxis: { band_padding: 0, domain_margin_type: "grid" },
+				yAxis: { band_padding: 0, domain_margin_type: "grid" }
+			};
+		}
+		
+		return options;
 	};
 	ccd3.DatasetManager.prototype.has_directive_series_type = function(){
 		var directives = ["bar","stackedbar","line"];
@@ -1734,6 +1909,7 @@ var ccd3 = function(){
 			}
 			ar.sort(sort_func);
 			for(var k=1;k<ar.length;k++){
+				if(ar[k]===ar[k-1]){ continue; }
 				step = Math.abs(ar[k] - ar[k-1]);
 				if(min===undefined){
 					min = step;
@@ -1800,8 +1976,8 @@ var ccd3 = function(){
 
 	ccd3.DatasetLoader = function(chart){
 		this.chart = chart;
-		this.source = undefined;
-		this.params = undefined;
+		this.source = undefined; // function or base_url
+		this.params = undefined; // arguments for function or url get-params(js obj)
 		this.before_filter = undefined;
 		this.after_filter = undefined;
 	};

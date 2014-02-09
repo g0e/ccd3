@@ -82,16 +82,43 @@ var ccd3_dataset = function(){
 		if(options===undefined){ options={}; }
 		var scale = (options.scale)? options.scale : 100;
 		var cnt = (options.cnt)? options.cnt : 10;
+		var random_drop = (options.random_drop)? options.random_drop : 0;
 		var series = [];
 		
 		for(var i=0;i<cnt;i++){
 			for(var j=0;j<cnt;j++){
-				series.push({x:"label"+i, y:"label"+j, z:Math.random()*scale});
+				if(random_drop){
+					if(Math.random()>random_drop){
+						series.push({x:"label"+i, y:"label"+j, z:Math.random()*scale});
+					}
+				}else{
+					series.push({x:"label"+i, y:"label"+j, z:Math.random()*scale});
+				}
 			}
 		}
 		return [{values:series}];
 	};
-	
+	ccd3_dataset.random_xyz_grid = function(options){
+		if(options===undefined){ options={}; }
+		var scale = (options.scale)? options.scale : 100;
+		var cnt = (options.cnt)? options.cnt : 10;
+		var random_drop = (options.random_drop)? options.random_drop : 0;
+		var series = [];
+		
+		for(var i=0;i<cnt;i++){
+			for(var j=0;j<cnt;j++){
+				if(random_drop){
+					if(Math.random()>random_drop){
+						series.push({x:i, y:j, z:Math.random()*scale});
+					}
+				}else{
+					series.push({x:i, y:j, z:Math.random()*scale});
+				}
+			}
+		}
+		return [{values:series}];
+	};
+
 	ccd3_dataset.random_xyz = function(options){
 		if(options===undefined){ options={}; }
 		var series_num = (options.series_num)? options.series_num : 5;
