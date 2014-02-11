@@ -1,6 +1,6 @@
 {
   "name": "ccd3",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "customizable chart for d3.js",
   "main": "ccd3.js",
   "repository": {
