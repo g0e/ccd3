@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.1.0"
+		version: "0.9.0"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -70,6 +70,7 @@ var ccd3 = function(){
 		this.color_palette = undefined;
 		this.height = 320;
 		this.width = 480;
+		this.chart_pattern = undefined;
 		this.direction = undefined;
 		this.show_values = "onzoom"; // always, onzoom
 		this.zoomed = false;
@@ -97,39 +98,110 @@ var ccd3 = function(){
 		if(cond === undefined){ cond = {}; }
 		
 		if(!this.initialized){
-			if(!this.color_palette){
-				// this.color_palette = d3.scale.category10().range();
-				// http://flatuicolors.com/
-				this.color_palette = ["#3498db","#e74c3c","#2ecc71","#f1c40f","#e67e22","#1abc9c",
-					"#2980b9","#c0392b","#27ae60","#f39c12","#d35400","#16a085"];
+			this.init();
+		}
+		
+		this.dataset_manager.update_stack_values(this.direction,this.stack_type);
+		
+		if(this.chart_pattern === "xy"){
+			this.xAxis.reset_range(this.inner_width);
+			this.yAxis.reset_range(this.inner_height);
+			if(!cond.dont_reset_domain){
+				this.xAxis.reset_domain();
+				this.yAxis.reset_domain();
+			}
+			this.xAxis.render();
+			this.yAxis.render();
+			
+			var right_margin = 10;
+			this.inner_width = this.width - this.yLabel.sizeof("width") - this.yAxis.sizeof("label_width") - right_margin;
+			
+			// call after fixed inner_width
+			this.legend.render(this.inner_width);
+			this.legend.arrange(
+				this.yAxis.sizeof("label_width") + this.yLabel.sizeof("width"),
+				this.title.sizeof("height")
+			);
+			
+			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height") - 
+				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height");
+			
+			this.xAxis.arrange(
+				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
+				this.height - this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height")
+			);
+			this.yAxis.arrange(
+				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
+				this.title.sizeof("height") + this.legend.sizeof("height")
+			);
+			
+			this.series_container.render(this.inner_width,this.inner_height);
+			this.series_container.arrange(
+				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
+				this.title.sizeof("height") + this.legend.sizeof("height")
+			);
+			
+			// must call after series_container setup
+			if(!(this.zoom instanceof ccd3.Parts)){
+				if(this.zoom.use && !(this.xAxis.scale_type === "ordinal" || this.yAxis.scale_type === "ordinal")){
+					this.zoom = new ccd3.Parts.Zoom(this,this.zoom);
+				}
 			}
 			
-			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
-				this.dataset_manager = new ccd3.DatasetManager(this);
-			}
-			this.dataset = this.dataset_manager.setup(this.dataset);
-			// must execute before execute this.init_parts()
-			this.setup_options(this.dataset_manager.options_from_dataset());
-			
-			if(this.svg===undefined){
-				this.svg = d3.select("#"+this.div_id)
-					.append("svg")
-					.attr("id","svg_"+this.div_id)
-					.attr("class","ccd3")
-					.attr("width",this.width)
-					.attr("height",this.height)
-					;
-			}
+			this.xAxis.reset_range(this.inner_width);
+			this.yAxis.reset_range(this.inner_height);
+			this.yAxis.render();
+			this.xAxis.render();
+		
+		}else if(this.chart_pattern === "r"){
 			this.inner_width = this.width;
-			this.inner_height = this.height;
+			this.inner_height = this.height - this.title.sizeof("height");
+			this.series_container.render(this.inner_width,this.inner_height);
+			this.series_container.arrange(
+				0,
+				this.title.sizeof("height")
+			);
+		}
+		
+		this.render_series();
+	};
+	
+	ccd3.Chart.prototype.init = function(cond){
+		if(!this.color_palette){
+			// this.color_palette = d3.scale.category10().range();
+			// http://flatuicolors.com/
+			this.color_palette = ["#3498db","#e74c3c","#2ecc71","#f1c40f","#e67e22","#1abc9c",
+				"#2980b9","#c0392b","#27ae60","#f39c12","#d35400","#16a085"];
+		}
 			
-			this.init_parts();
-			
-			this.title.render();
+		if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
+			this.dataset_manager = new ccd3.DatasetManager(this);
+		}
+		this.dataset = this.dataset_manager.setup(this.dataset);
+		// must execute before execute this.init_parts()
+		this.setup_options(this.dataset_manager.options_from_dataset());
+		this.chart_pattern = this.dataset_manager.detect_chart_pattern();
+		
+		if(this.svg===undefined){
+			this.svg = d3.select("#"+this.div_id)
+				.append("svg")
+				.attr("id","svg_"+this.div_id)
+				.attr("class","ccd3")
+				.attr("width",this.width)
+				.attr("height",this.height)
+				;
+		}
+		this.inner_width = this.width;
+		this.inner_height = this.height;
+		
+		this.init_parts();
+		
+		this.title.render();
+		this.title.arrange(this.width/2,this.title.height/2);
+		
+		if(this.chart_pattern === "xy"){
 			this.xLabel.render();
 			this.yLabel.render();
-			
-			this.title.arrange(this.width/2,this.title.height/2);
 			this.xLabel.arrange(this.width/2,this.height - this.xLabel.height/2);
 			this.yLabel.arrange(this.yLabel.width/2,this.height/2);
 			
@@ -149,103 +221,12 @@ var ccd3 = function(){
 			
 			this.xAxis.init_scale();
 			this.yAxis.init_scale();
-		
-			// switch false if you want to re-render labels
-			this.initialized = true;
 		}
-		
-		this.dataset_manager.update_stack_values(this.direction,this.stack_type);
-		
-		this.xAxis.reset_range(this.inner_width);
-		this.yAxis.reset_range(this.inner_height);
-		if(!cond.dont_reset_domain){
-			this.xAxis.reset_domain();
-			this.yAxis.reset_domain();
-		}
-		this.xAxis.render();
-		this.yAxis.render();
-		
-		var right_margin = 10;
-		this.inner_width = this.width - this.yLabel.sizeof("width") - this.yAxis.sizeof("label_width") - right_margin;
-		
-		// call after fixed inner_width
-		this.legend.render(this.inner_width);
-		this.legend.arrange(
-			this.yAxis.sizeof("label_width") + this.yLabel.sizeof("width"),
-			this.title.sizeof("height")
-		);
-		
-		this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height") - 
-			this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height");
-		
-		this.xAxis.arrange(
-			this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-			this.height - this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height")
-		);
-		this.yAxis.arrange(
-			this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-			this.title.sizeof("height") + this.legend.sizeof("height")
-		);
-		
-		this.series_container.render(this.inner_width,this.inner_height);
-		this.series_container.arrange(
-			this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-			this.title.sizeof("height") + this.legend.sizeof("height")
-		);
-		
-		// must call after series_container setup
-		if(!(this.zoom instanceof ccd3.Parts)){
-			if(this.zoom.use && !(this.xAxis.scale_type === "ordinal" || this.yAxis.scale_type === "ordinal")){
-				this.zoom = new ccd3.Parts.Zoom(this,this.zoom);
-			}
-		}
-		
-		this.xAxis.reset_range(this.inner_width);
-		this.yAxis.reset_range(this.inner_height);
-		this.yAxis.render();
-		this.xAxis.render();
-		
-		this.render_series();
+		// switch false if you want to re-render labels
+		this.initialized = true;
 	};
-
-	ccd3.Chart.prototype.init_parts = function(dataset,func){
-		if(!(this.title instanceof ccd3.Parts)){
-			if(this.title.text===undefined){
-				this.title = new ccd3.Parts(this,this.title);
-			}else{
-				this.title = new ccd3.Parts.Label.Title(this,this.title);
-			}
-		}
-		if(!(this.xLabel instanceof ccd3.Parts)){
-			if(this.xLabel.text===undefined){
-				this.xLabel = new ccd3.Parts(this,this.xLabel);
-			}else{
-				this.xLabel = new ccd3.Parts.Label.xLabel(this,this.xLabel);
-			}
-		}
-		if(!(this.yLabel instanceof ccd3.Parts)){
-			if(this.yLabel.text===undefined){
-				this.yLabel = new ccd3.Parts(this,this.yLabel);
-			}else{
-				this.yLabel = new ccd3.Parts.Label.yLabel(this,this.yLabel);
-			}
-		}
-		
-		if(!(this.xAxis instanceof ccd3.Parts)){
-			this.xAxis = new ccd3.Parts.Axis.xAxis(this,this.xAxis);
-		}
-		if(!(this.yAxis instanceof ccd3.Parts)){
-			this.yAxis = new ccd3.Parts.Axis.yAxis(this,this.yAxis);
-		}
-		
-		if(!(this.lgend instanceof ccd3.Parts)){
-			if(this.legend.show){
-				this.legend = new ccd3.Parts.Legend(this,this.legend);
-			}else{
-				this.legend = new ccd3.Parts(this,this.legend);
-			}
-		}
-		
+	
+	ccd3.Chart.prototype.init_parts = function(){
 		if(!(this.series_container instanceof ccd3.Parts)){
 			this.series_container = new ccd3.Parts.SeriesContainer(this,this.series_container);
 		}
@@ -255,6 +236,44 @@ var ccd3 = function(){
 				this.tooltip = new ccd3.Parts.Tooltip(this,this.tooltip);
 			}else{
 				this.tooltip.add_listener = function(){};
+			}
+		}
+		
+		if(!(this.title instanceof ccd3.Parts)){
+			if(this.title.text===undefined){
+				this.title = new ccd3.Parts(this,this.title);
+			}else{
+				this.title = new ccd3.Parts.Label.Title(this,this.title);
+			}
+		}
+		
+		if(this.chart_pattern === "xy"){
+			if(!(this.xLabel instanceof ccd3.Parts)){
+				if(this.xLabel.text===undefined){
+					this.xLabel = new ccd3.Parts(this,this.xLabel);
+				}else{
+					this.xLabel = new ccd3.Parts.Label.xLabel(this,this.xLabel);
+				}
+			}
+			if(!(this.yLabel instanceof ccd3.Parts)){
+				if(this.yLabel.text===undefined){
+					this.yLabel = new ccd3.Parts(this,this.yLabel);
+				}else{
+					this.yLabel = new ccd3.Parts.Label.yLabel(this,this.yLabel);
+				}
+			}
+			if(!(this.xAxis instanceof ccd3.Parts)){
+				this.xAxis = new ccd3.Parts.Axis.xAxis(this,this.xAxis);
+			}
+			if(!(this.yAxis instanceof ccd3.Parts)){
+				this.yAxis = new ccd3.Parts.Axis.yAxis(this,this.yAxis);
+			}
+			if(!(this.lgend instanceof ccd3.Parts)){
+				if(this.legend.show){
+					this.legend = new ccd3.Parts.Legend(this,this.legend);
+				}else{
+					this.legend = new ccd3.Parts(this,this.legend);
+				}
 			}
 		}
 	};
@@ -288,6 +307,9 @@ var ccd3 = function(){
 							break;
 						case "heatmap": 
 							this.series[i] = new ccd3.Parts.Series.Heatmap(this,this.series_options.heatmap);
+							break;
+						case "pie": 
+							this.series[i] = new ccd3.Parts.Series.Pie(this,this.series_options.pie);
 							break;
 					}
 				}
@@ -999,7 +1021,8 @@ var ccd3 = function(){
 			stackedbar:	{ zindex: 3 },
 			bubble:		{ zindex: 4 },
 			line:		{ zindex: 5 },
-			scatter:	{ zindex: 6 }
+			scatter:	{ zindex: 6 },
+			pie:		{ zindex: 0 }
 		};
 	};
 	ccd3.Parts.Series.prototype = new ccd3.Parts();
@@ -1813,6 +1836,112 @@ var ccd3 = function(){
 		html += "<br>z: " + this.format(d.z);
 		return html;
 	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.Series.Pie                                             */
+	/* ------------------------------------------------------------------ */
+
+	ccd3.Parts.Series.Pie = function(){ ccd3.Parts.Series.apply(this,arguments); };
+	ccd3.Parts.Series.Pie.prototype = new ccd3.Parts.Series();
+	ccd3.Parts.Series.Pie.prototype.get_defaults = function(){
+		return {
+			inner_radius: 0,
+			radius_nofocus: 0.95,
+			opacity: 0.7
+		};
+	};
+	ccd3.Parts.Series.Pie.prototype.render = function(){
+		var that = this;
+		var radius = Math.min(this.chart.inner_height,this.chart.inner_width)/2;
+		var arc = d3.svg.arc().outerRadius(radius*this.radius_nofocus).innerRadius(radius*this.inner_radius);
+		
+		if(this.yFormat===undefined){
+			this.yFormat = ccd3.Util.default_numeric_format;
+		}
+		if(this.pFormat===undefined){
+			this.pFormat = d3.format(".1%");
+		}
+		
+		var pie = d3.layout.pie().sort(null)
+			.value(function(d) { return d.y; });
+		
+		this.svg.attr("transform", function(){
+					return "translate("+(that.chart.inner_width/2)+","+(that.chart.inner_height/2)+")"; 
+				});
+		
+		// data join
+		var pie_data = pie(this.get_data());
+		var arcs = this.svg.selectAll(".ccd3_arc_g").data(pie_data);
+		
+		// enter
+		arcs.enter()
+			.append("g")
+			.attr("class","ccd3_arc_g")
+			.style("opacity",this.opacity)
+			.on("mouseover", function(){
+				d3.select(this)
+					.style("opacity",1)
+					.select("path")
+					.attr("d",function(d,i){
+						arc.outerRadius(radius);
+						return arc(d);
+					});
+			})
+			.on("mouseout", function(){
+				d3.select(this)
+					.style("opacity",that.opacity)
+					.select("path")
+					.attr("d",function(d,i){
+						arc.outerRadius(radius*that.radius_nofocus);
+						return arc(d);
+					});
+			})
+			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				e.append("path")
+				.attr("d",arc)
+				.style("fill",function(d,i){ return that.chart._color(i); });
+			})
+			.call(function(e){
+				e.append("text")
+				.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+				.attr("dy", ".35em")
+				.style("text-anchor", "middle")
+				.call(function(e){
+					e.append("tspan")
+					.attr("y","-1em")
+					.text(function(d){ return d.data.x; })
+					;
+				})
+				.call(function(e){
+					e.append("tspan")
+					.attr("dy","1em")
+					.attr("x",0)
+					.text(function(d){ return that.pFormat((d.endAngle - d.startAngle)/Math.PI/2); })
+					;
+				})
+				.call(function(e){
+					e.append("tspan")
+					.attr("dy","1em")
+					.attr("x",0)
+					.text(function(d){ return that.yFormat(d.data.y); })
+					;
+				});
+			});
+		
+		// update
+		// !?
+		
+		// exit
+		arcs.call(this.exit);
+	};
+	ccd3.Parts.Series.Pie.prototype.tooltip_html = function(d){
+		var html = "";
+		html += "<b>" + d.data.x + "</b>";
+		html += "<br>%: " + this.pFormat((d.endAngle - d.startAngle)/Math.PI/2);
+		html += "<br>value: " + this.yFormat(d.data.y);
+		return html;
+	};
 
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.DatasetManager                                               */
@@ -1855,14 +1984,20 @@ var ccd3 = function(){
 			}
 			st_ar.push(dataset[i].series_type);
 		}
-		if(st_ar.indexOf("heatmap")>=0 && st_ar.length>1){
-			throw new Error("If you use 'heatmap' series_type, you must set only one series in dataset.");
+		if((st_ar.indexOf("heatmap")>=0 || st_ar.indexOf("pie")>=0) && st_ar.length>1){
+			throw new Error("If you use 'heatmap' or 'pie' series_type, you must set only one series in dataset.");
 		}
 		if(st_ar.indexOf("bar")>=0 && st_ar.indexOf("stackedbar")>=0){
 			throw new Error("You can't use 'bar' and 'stackedbar' series_type at the same time.");
 		}
 		
 		return dataset;
+	};
+	ccd3.DatasetManager.prototype.detect_chart_pattern = function(){
+		if(this.dataset[0].series_type === "pie"){
+			return "r";
+		}
+		return "xy";
 	};
 	ccd3.DatasetManager.prototype.options_from_dataset = function(){
 		var options = {};
