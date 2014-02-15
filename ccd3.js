@@ -1742,16 +1742,33 @@ var ccd3 = function(){
 		var text_visibility = this.text_visibility();
 		var xScale = this.chart.xAxis.scale;	
 		var yScale = this.chart.yAxis.scale;
+		var xAxis = this.chart.xAxis;
+		var yAxis = this.chart.yAxis;
 		var yFormat = this.chart.yAxis.format;
 		this.color = this.chart._color(i);
+		
+		var calc_x = function(d){
+			if(xAxis.scale_type==="ordinal"){
+				return xScale(d.x) + xScale.rangeBand()/2;
+			}else{
+				return xScale(d.x);
+			}
+		};
+		var calc_y = function(d){
+			if(yAxis.scale_type==="ordinal"){
+				return yScale(d.y) + yScale.rangeBand()/2;
+			}else{
+				return yScale(d.y);
+			}
+		};
 		
 		/* line path */
 		// render line first not to prevent tooltip mouseover
 		// data join
 		var data = (this.series.visible)? [0] : [];
 		var path_def = d3.svg.line()
-			.x(function(d){ return xScale(d.x); })
-			.y(function(d){ return yScale(d.y); })
+			.x(calc_x)
+			.y(calc_y)
 			.interpolate("linear")
 			;
 		var path = this.svg.selectAll("path").data(data);
@@ -1816,7 +1833,7 @@ var ccd3 = function(){
 		circles
 			.transition().duration(500)
 			.attr("transform",function(d){
-				return "translate("+xScale(d.x)+","+yScale(d.y)+")";
+				return "translate("+calc_x(d)+","+calc_y(d)+")";
 			})
 			.style("opacity",1)
 			.call(function(e){
