@@ -2,7 +2,7 @@
 describe("ccd3 basic charts", function(){
 	var c; // chart obj
 	var d; // dataset obj
-	var series_types = ["line","bar","stackedbar","scatter","bubble"];
+	var series_types = ["line","bar","stackedbar","scatter","bubble","radar"];
 	
 	beforeEach(function(){
 	});
@@ -19,6 +19,7 @@ describe("ccd3 basic charts", function(){
 				c.default_series_type = series_type;
 				c.render();
 			};
+			var dataset_options = {cnt:1};
 
 			it("random_diff", function(){
 				series_types.forEach(function(type){

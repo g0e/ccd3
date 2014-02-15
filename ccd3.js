@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.9.1"
+		version: "0.9.2"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -53,6 +53,8 @@ var ccd3 = function(){
 		this.xAxis = {};
 		this.yAxis = {};
 		this.zAxis = {};
+		this.rAxis = {};
+		this.aAxis = {};
 		this.legend = { show:true };
 		this.tooltip = { show:true };
 		this.zoom = { use:true };
@@ -104,12 +106,12 @@ var ccd3 = function(){
 		this.dataset_manager.update_stack_values(this.direction,this.stack_type);
 		
 		if(this.chart_pattern === "xy"){
-			this.xAxis.reset_range(this.inner_width);
-			this.yAxis.reset_range(this.inner_height);
 			if(!cond.dont_reset_domain){
 				this.xAxis.reset_domain();
 				this.yAxis.reset_domain();
 			}
+			this.xAxis.reset_range(this.inner_width);
+			this.yAxis.reset_range(this.inner_height);
 			this.xAxis.render();
 			this.yAxis.render();
 			
@@ -153,6 +155,43 @@ var ccd3 = function(){
 			this.yAxis.render();
 			this.xAxis.render();
 		
+		}else if(this.chart_pattern === "ra"){
+			var legend_width = Math.min(this.height,this.width);
+			this.legend.render(legend_width);
+			
+			this.inner_width = this.width;
+			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height");
+			var radius = Math.min(this.inner_height,this.inner_width)/2*0.9;
+			if(this.inner_height > this.inner_width){
+				this.title.arrange(this.width/2, (this.inner_height-radius*2)/2 + this.title.sizeof("height")/2);
+				this.legend.arrange(0, (this.inner_height-radius*2)/2 + this.title.sizeof("height"));
+			}else{
+				this.legend.arrange((this.width - legend_width)/2,this.title.sizeof("height"));
+			}
+			
+			if(!cond.dont_reset_domain){
+				this.rAxis.reset_domain();
+				this.aAxis.reset_domain();
+			}
+			this.rAxis.reset_range(radius);
+			this.aAxis.reset_range(radius);
+			this.rAxis.render();
+			this.aAxis.render();
+			
+			this.series_container.render(this.inner_width,this.inner_height);
+			this.series_container.arrange(
+				0,
+				this.title.sizeof("height") + this.legend.sizeof("height")
+			);
+			this.rAxis.arrange(
+				this.inner_width/2,
+				this.inner_height/2 + this.title.sizeof("height") + this.legend.sizeof("height")
+			);
+			this.aAxis.arrange(
+				this.inner_width/2,
+				this.inner_height/2 + this.title.sizeof("height") + this.legend.sizeof("height")
+			);
+
 		}else if(this.chart_pattern === "r"){
 			this.inner_width = this.width;
 			this.inner_height = this.height - this.title.sizeof("height");
@@ -205,10 +244,11 @@ var ccd3 = function(){
 			this.xLabel.arrange(this.width/2,this.height - this.xLabel.height/2);
 			this.yLabel.arrange(this.yLabel.width/2,this.height/2);
 			
+			// calc_min_step return undefined if series has only one data.
 			this.xAxis.scale_type = this.dataset_manager.detect_scale_type(function(d){return d.x;});
-			this.xAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.x;});
+			this.xAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.x;}) || 2.0;
 			this.yAxis.scale_type = this.dataset_manager.detect_scale_type(function(d){return d.y;});
-			this.yAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.y;});
+			this.yAxis.min_step = this.dataset_manager.calc_min_step(function(d){return d.y;}) || 2.0;
 			
 			var series_directive = this.dataset_manager.has_directive_series_type();
 			if(!series_directive && this.yAxis.scale_type === "linear" && this.xAxis.scale_type === "linear"){
@@ -221,6 +261,9 @@ var ccd3 = function(){
 			
 			this.xAxis.init_scale();
 			this.yAxis.init_scale();
+		}else if(this.chart_pattern === "ra"){
+			this.rAxis.init_scale();
+			this.aAxis.init_scale();
 		}
 		// switch false if you want to re-render labels
 		this.initialized = true;
@@ -275,6 +318,20 @@ var ccd3 = function(){
 					this.legend = new ccd3.Parts(this,this.legend);
 				}
 			}
+		}else if(this.chart_pattern === "ra"){
+			if(!(this.rAxis instanceof ccd3.Parts)){
+				this.rAxis = new ccd3.Parts.rAxis(this,this.rAxis);
+			}
+			if(!(this.aAxis instanceof ccd3.Parts)){
+				this.aAxis = new ccd3.Parts.aAxis(this,this.aAxis);
+			}
+			if(!(this.lgend instanceof ccd3.Parts)){
+				if(this.legend.show){
+					this.legend = new ccd3.Parts.Legend(this,this.legend);
+				}else{
+					this.legend = new ccd3.Parts(this,this.legend);
+				}
+			}
 		}
 	};
 	
@@ -282,6 +339,7 @@ var ccd3 = function(){
 		var dataset = this.dataset;
 		var num,i;
 		var dataset_num,series_num;
+		var type_info = ccd3.Parts.Series.type_info();
 		
 		dataset_num = this.dataset.length;
 		series_num = this.series.length;
@@ -289,29 +347,8 @@ var ccd3 = function(){
 		for(i=0;i<num;i++){
 			if(i<dataset_num){
 				if(!(this.series[i] instanceof ccd3.Parts.Series)){
-					switch(dataset[i].series_type){
-						case "scatter": 
-							this.series[i] = new ccd3.Parts.Series.Scatter(this,this.series_options.scatter);
-							break;
-						case "bar": 
-							this.series[i] = new ccd3.Parts.Series.Bar(this,this.series_options.bar);
-							break;
-						case "stackedbar": 
-							this.series[i] = new ccd3.Parts.Series.StackedBar(this,this.series_options.stackedbar);
-							break;
-						case "line": 
-							this.series[i] = new ccd3.Parts.Series.Line(this,this.series_options.line);
-							break;
-						case "bubble": 
-							this.series[i] = new ccd3.Parts.Series.Bubble(this,this.series_options.bubble);
-							break;
-						case "heatmap": 
-							this.series[i] = new ccd3.Parts.Series.Heatmap(this,this.series_options.heatmap);
-							break;
-						case "pie": 
-							this.series[i] = new ccd3.Parts.Series.Pie(this,this.series_options.pie);
-							break;
-					}
+					// create ccd3.Parts.Series
+					this.series[i] = new (type_info[dataset[i].series_type].obj)(this,this.series_options[dataset[i].series_type]);
 				}
 				this.series[i].init_svg(this.dataset[i]);
 			}else{
@@ -550,7 +587,7 @@ var ccd3 = function(){
 		}
 		
 		if(this.svg===undefined){
-			this.svg = this.chart.svg.append("g").attr("class","svg_legend");
+			this.svg = this.chart.svg.append("g").attr("class","ccd3_legend");
 		}
 		
 		var items = this.svg.select(".legend_items");
@@ -649,7 +686,12 @@ var ccd3 = function(){
 	ccd3.Parts.Tooltip.prototype.get_defaults = function(){
 		return {
 			show: true,
-			font_size: 10
+			font_size: 10,
+			xFormat: undefined,
+			yFormat: undefined,
+			zFormat: undefined,
+			rFormat: undefined,
+			aFormat: undefined
 		};
 	};
 	ccd3.Parts.Tooltip.prototype.render = function(){
@@ -719,6 +761,7 @@ var ccd3 = function(){
 			show_label: true,
 			tick_num: undefined,
 			tick_padding: 5,
+			tick_values: undefined, // use if scale_type == "date"
 			font_size: 10,
 			label_width: 0,
 			label_height: 0,
@@ -730,14 +773,16 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Axis.prototype.render = function(){};
 	ccd3.Parts.Axis.prototype.init_format = function(){
-		if(this.scale_type === "date"){
-			this.format = ccd3.Util.default_date_format();
-		}else if(this.scale_type === "linear"){
-			this.format = ccd3.Util.default_numeric_format;
-		}else if(this.scale_type === "ordinal"){
-			this.format = function(d){ return d; };
-		}else{
-			throw new Error("Invalid scale_type");
+		if(this.format === undefined){
+			if(this.scale_type === "date"){
+				this.format = ccd3.Util.default_date_format;
+			}else if(this.scale_type === "linear"){
+				this.format = ccd3.Util.default_numeric_format;
+			}else if(this.scale_type === "ordinal"){
+				this.format = function(d){ return d; };
+			}else{
+				throw new Error("Invalid scale_type");
+			}
 		}
 	};
 	ccd3.Parts.Axis.prototype.init_scale = function(){
@@ -749,13 +794,35 @@ var ccd3 = function(){
 				default:break;
 			}
 		}
+		this.init_format();
 	};
 	ccd3.Parts.Axis.prototype.reset_range = function(range_max){
 		this.range_max = range_max;
 		if(this.scale_type === "ordinal"){
 			this.scale.rangeRoundBands([this.range_min, this.range_max], this.band_padding);
+			this.tick_values = undefined;
+		}else if(this.scale_type === "date"){
+			this.scale.range([this.range_min, this.range_max]);
+			
+			// not to show same tick_label twice, force tickValues by Axis.format
+			var cur_ticks = this.scale.ticks();
+			var new_ticks = [];
+			/*
+			if(cur_ticks.length>=2 && this.format(cur_ticks[0]) != this.format(cur_ticks[1])){
+				new_ticks.push(cur_ticks[0]);
+			}
+			*/
+			var prev=cur_ticks[0];
+			for(var i=1,len=cur_ticks.length;i<len;i++){
+				if(this.format(prev)!=this.format(cur_ticks[i])){
+					new_ticks.push(cur_ticks[i]);
+				}
+				prev = cur_ticks[i];
+			}
+			this.tick_values = new_ticks;
 		}else{
 			this.scale.range([this.range_min, this.range_max]);
+			this.tick_values = undefined;
 		}
 	};
 	ccd3.Parts.Axis.prototype.reset_domain = function(){
@@ -765,7 +832,9 @@ var ccd3 = function(){
 		if(this.scale_type === "ordinal"){
 			func = function(d){ return d[direction]; };
 			for(var i=0,len=this.chart.dataset.length;i<len;i++){
-				domain = domain.concat(this.chart.dataset[i].values.map(func));
+				if(this.chart.dataset[i].visible){
+					domain = domain.concat(this.chart.dataset[i].values.map(func));
+				}
 			}
 		}else{
 			if(direction === "x"){
@@ -822,7 +891,7 @@ var ccd3 = function(){
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Axis.xAxis                                             */
 	/* ------------------------------------------------------------------ */
-
+	
 	ccd3.Parts.Axis.xAxis = function(){ ccd3.Parts.Axis.apply(this,arguments); };
 	ccd3.Parts.Axis.xAxis.prototype = new ccd3.Parts.Axis();
 	ccd3.Parts.Axis.xAxis.prototype.get_defaults = function(){
@@ -840,9 +909,6 @@ var ccd3 = function(){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_xAxis");
 		}
 
-		if(this.format===undefined){
-			this.init_format();
-		}
 		if(this.show_label){
 			format = this.format;
 		}else{
@@ -854,7 +920,9 @@ var ccd3 = function(){
 			.orient("bottom")
 			.tickFormat(format)
 			;
-		if(this.tick_num){
+		if(this.tick_values){
+			this.axis.tickValues(this.tick_values);
+		}else if(this.tick_num){
 			this.axis.ticks(this.tick_num);
 		}
 		this.svg
@@ -867,17 +935,17 @@ var ccd3 = function(){
 					return "translate(" + this.getBBox().height*-0.5 + "," + that.tick_padding+")rotate(-90)";
 				})
 			;
-
+		
 		this.text_height = d3.max(this.svg.selectAll(".ccd3_x_tick_label")[0].map(function(e){ 
 			return e.getBBox().width;
 		}));
 		this.label_height = this.text_height + this.margin_top + this.margin_bottom;
 	};
-
+	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Axis.yAxis                                             */
 	/* ------------------------------------------------------------------ */
-
+	
 	ccd3.Parts.Axis.yAxis = function(){ ccd3.Parts.Axis.apply(this,arguments); };
 	ccd3.Parts.Axis.yAxis.prototype = new ccd3.Parts.Axis();
 	ccd3.Parts.Axis.yAxis.prototype.get_defaults = function(){
@@ -894,9 +962,6 @@ var ccd3 = function(){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_yAxis");
 		}
 		
-		if(this.format===undefined){
-			this.init_format();
-		}
 		if(this.show_label){
 			format = this.format;
 		}else{
@@ -909,7 +974,9 @@ var ccd3 = function(){
 			.orient("left")
 			.tickFormat(format)
 			;
-		if(this.tick_num){
+		if(this.tick_values){
+			this.axis.tickValues(this.tick_values);
+		}else if(this.tick_num){
 			this.axis.ticks(this.tick_num);
 		}
 		this.svg
@@ -923,6 +990,187 @@ var ccd3 = function(){
 			return e.getBBox().width;
 		}));
 		this.label_width = this.text_width + this.margin_right + this.margin_left;
+	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.rAxis r=radius                                         */
+	/* ------------------------------------------------------------------ */
+	
+	ccd3.Parts.rAxis = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.rAxis.prototype = new ccd3.Parts();
+	ccd3.Parts.rAxis.prototype.get_defaults = function(){
+		return {
+			radius: undefined,
+			scale: undefined,
+			format: undefined,
+			font_size: 10
+		};
+	};
+	ccd3.Parts.rAxis.prototype.render = function(){
+		var that = this;
+		
+		this.init_scale();
+		this.reset_domain();
+		
+		if(!this.svg){
+			this.svg = this.chart.svg.append("g").attr("class","ccd3_rAxis");
+		}
+		
+		var ticks = this.svg.selectAll(".ccd3_rAxis_ticks").data(that.scale.ticks(3));
+		// enter
+		ticks.enter()
+			.append("g")
+			.attr("class","ccd3_rAxis_ticks")
+			.call(function(e){
+				e.append("circle")
+				.attr("fill","none")
+				.attr("stroke","lightgray")
+				.attr("stroke-width",1)
+				;
+			})
+			.call(function(e){
+				e.append("text")
+				.attr("text-anchor","middle")
+				.attr("font-size",this.font_size)
+				;
+			})
+			;
+		// update
+		ticks
+			.call(function(e){
+				e.select("circle")
+				.attr("r",function(d){ return that.scale(d); })
+				;
+			})
+			.call(function(e){
+				e.select("text")
+				.text(function(d){ return that.format(d); })
+				.attr("y",function(d){ return -1.0 * that.scale(d); })
+				;
+			})
+			;
+		// exit
+		ticks.exit().remove();
+
+	};
+	ccd3.Parts.rAxis.prototype.init_format = function(){
+		if(this.format===undefined){
+			this.format = ccd3.Util.default_numeric_format;
+		}
+	};
+	ccd3.Parts.rAxis.prototype.init_scale = function(){
+		if(!(this.scale)){
+			this.scale = d3.scale.linear();
+		}
+		this.init_format();
+	};
+	ccd3.Parts.rAxis.prototype.reset_range = function(radius){
+		this.radius = radius;
+		this.scale.range([0,this.radius*0.8]); // TODO
+	};
+	ccd3.Parts.rAxis.prototype.reset_domain = function(){
+		var func = function(d){ return d.y; };
+		//var min = this.chart.dataset_manager.get_min(func);
+		var max = this.chart.dataset_manager.get_max(func);
+		this.scale.domain([0,max]);
+	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.aAxis a=angle                                          */
+	/* ------------------------------------------------------------------ */
+	
+	ccd3.Parts.aAxis = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.aAxis.prototype = new ccd3.Parts();
+	ccd3.Parts.aAxis.prototype.get_defaults = function(){
+		return {
+			radius: undefined,
+			scale: undefined,
+			format: undefined,
+			font_size: 10
+		};
+	};
+	ccd3.Parts.aAxis.prototype.render = function(){
+		var that = this;
+		
+		this.init_scale();
+		this.reset_domain();
+		
+		if(!this.svg){
+			this.svg = this.chart.svg.append("g").attr("class","ccd3_aAxis");
+		}
+		
+		var ticks = this.svg.selectAll(".ccd3_aAxis_ticks").data(this.scale.domain());
+		// enter
+		ticks.enter()
+			.append("g")
+			.attr("class","ccd3_aAxis_ticks")
+			.call(function(e){
+				e.append("line")
+				.attr("x1",0)
+				.attr("y1",0)
+				.attr("stroke","lightgray")
+				.attr("stroke-width",1)
+				;
+			})
+			.call(function(e){
+				e.append("text")
+				.attr("text-anchor","middle")
+				.attr("font-size",this.font_size)
+				;
+			})
+			;
+		// update
+		ticks
+			.call(function(e){
+				e.select("line")
+				.attr("x2",function(d){ return that.radius*Math.sin(that.scale(d)); })
+				.attr("y2",function(d){ return that.radius*Math.cos(that.scale(d))*-1.0; })
+				;
+			})
+			.call(function(e){
+				e.select("text")
+				.text(function(d){ return that.format(d); })
+				.attr("transform",function(d){
+					var x=that.radius*Math.sin(that.scale(d));
+					var y=that.radius*Math.cos(that.scale(d))*-1.0;
+					var w=this.getBBox().width;
+					if(x+w/2 > that.chart.inner_width/2){ // not to overflow
+						x = that.chart.inner_width/2 - w/2;
+					}else if(x-w/2 < that.chart.inner_width/2*-1){
+						x = that.chart.inner_width/2*-1 + w/2;
+					}
+					return "translate("+x+","+y+")";
+				})
+				;
+			})
+			;
+		// exit
+		ticks.exit().remove();
+		
+	};
+	ccd3.Parts.aAxis.prototype.init_format = function(){
+		if(this.format===undefined){
+			this.format = function(d){ return d; };
+		}
+	};
+	ccd3.Parts.aAxis.prototype.init_scale = function(){
+		if(!(this.scale)){
+			this.scale = d3.scale.ordinal().rangePoints([0,Math.PI*2],1);
+		}
+		this.init_format();
+	};
+	ccd3.Parts.aAxis.prototype.reset_range = function(radius){
+		this.radius = radius;
+	};
+	ccd3.Parts.aAxis.prototype.reset_domain = function(){
+		var domain = [];
+		var func = function(d){ return d.x; };
+		for(var i=0,len=this.chart.dataset.length;i<len;i++){
+			if(this.chart.dataset[i].visible){
+				domain = domain.concat(this.chart.dataset[i].values.map(func));
+			}
+		}
+		this.scale.domain(domain);
 	};
 
 	/* ------------------------------------------------------------------ */
@@ -1016,13 +1264,14 @@ var ccd3 = function(){
 	ccd3.Parts.Series = function(){ ccd3.Parts.apply(this,arguments); };
 	ccd3.Parts.Series.type_info = function(){
 		return {
-			heatmap:	{ zindex: 1 },
-			bar:		{ zindex: 2 },
-			stackedbar:	{ zindex: 3 },
-			bubble:		{ zindex: 4 },
-			line:		{ zindex: 5 },
-			scatter:	{ zindex: 6 },
-			pie:		{ zindex: 0 }
+			heatmap:	{ obj:ccd3.Parts.Series.Heatmap,	zindex:1, is_single_series:true },
+			bar:		{ obj:ccd3.Parts.Series.Bar,		zindex:2 },
+			stackedbar:	{ obj:ccd3.Parts.Series.StackedBar,	zindex:3 },
+			bubble:		{ obj:ccd3.Parts.Series.Bubble,		zindex:4 },
+			line:		{ obj:ccd3.Parts.Series.Line,		zindex:5 },
+			scatter:	{ obj:ccd3.Parts.Series.Scatter,	zindex:6 },
+			pie:		{ obj:ccd3.Parts.Series.Pie,		zindex:0, is_single_series:true },
+			radar:		{ obj:ccd3.Parts.Series.Radar,		zindex:0 },
 		};
 	};
 	ccd3.Parts.Series.prototype = new ccd3.Parts();
@@ -1040,7 +1289,7 @@ var ccd3 = function(){
 	ccd3.Parts.Series.prototype.init_svg = function(series){
 		this.series = series;
 		if(!(this.svg)){
-			var st = ccd3.Parts.Series.type_info();
+			var info = ccd3.Parts.Series.type_info();
 			this.svg = this.chart.series_container.svg
 				.append("g")
 				.attr("id","series_"+series.series_num)
@@ -1049,7 +1298,7 @@ var ccd3 = function(){
 				.attr("series_name",series.name)
 				.attr("class",this.class_name)
 				.attr("series_type",series.series_type)
-				.datum(st[series.series_type].zindex * 1000 + series.series_num) // magic number 1000
+				.datum(info[series.series_type].zindex * 1000 + series.series_num) // magic number 1000
 				;
 		}
 	};
@@ -1082,10 +1331,12 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.prototype.highlight = function(){};
 	ccd3.Parts.Series.prototype.tooltip_html = function(d){
+		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
+		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
 		var html = "";
 		html += "<b>" + this.series.name + "</b>";
-		html += "<br>x: " + this.chart.xAxis.format(d.x);
-		html += "<br>y: " + this.chart.yAxis.format(d.y);
+		html += "<br>x: " + xFormat(d.x);
+		html += "<br>y: " + yFormat(d.y);
 		return html;
 	};
 	
@@ -1605,7 +1856,8 @@ var ccd3 = function(){
 		return {
 			opacity: 0.7,
 			max_radius: 10,
-			min_radius: 3
+			min_radius: 3,
+			zFormat: ccd3.Util.default_numeric_format
 		};
 	};
 	ccd3.Parts.Series.Bubble.prototype.render = function(){
@@ -1616,7 +1868,6 @@ var ccd3 = function(){
 		var yScale = this.chart.yAxis.scale;
 		var xAxis = this.chart.xAxis;	
 		var yAxis = this.chart.yAxis;	
-		this.zFormat = ccd3.Util.default_numeric_format;
 		this.color = this.chart._color(i);
 		
 		if(this.zScale===undefined){
@@ -1705,11 +1956,14 @@ var ccd3 = function(){
 		}
 	};
 	ccd3.Parts.Series.Bubble.prototype.tooltip_html = function(d){
+		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
+		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
+		var zFormat = this.chart.tooltip.zFormat || this.zFormat;
 		var html = "";
 		html += "<b>" + this.series.name + "</b>";
-		html += "<br>x: " + this.chart.xAxis.format(d.x);
-		html += "<br>y: " + this.chart.yAxis.format(d.y);
-		html += "<br>z: " + this.zFormat(d.z);
+		html += "<br>x: " + xFormat(d.x);
+		html += "<br>y: " + yFormat(d.y);
+		html += "<br>z: " + zFormat(d.z);
 		return html;
 	};
 	
@@ -1722,7 +1976,8 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Heatmap.prototype.get_defaults = function(){
 		return {
 			low_color: "red",
-			high_color: "green"
+			high_color: "green",
+			zFormat: ccd3.Util.default_numeric_format
 		};
 	};
 	ccd3.Parts.Series.Heatmap.prototype.render = function(){
@@ -1734,7 +1989,6 @@ var ccd3 = function(){
 		var xAxis = this.chart.xAxis;
 		var yAxis = this.chart.yAxis;
 		var width,height;
-		this.format = ccd3.Util.default_numeric_format;
 		this.color = this.chart._color(i);
 		var xy_func, text_xy_func;
 		
@@ -1797,7 +2051,7 @@ var ccd3 = function(){
 				.append("text")
 				.attr("text-anchor","middle")
 				.text(function(d){
-					return that.format(d.z);
+					return that.zFormat(d.z);
 				})
 				;
 			})
@@ -1830,10 +2084,13 @@ var ccd3 = function(){
 
 	};
 	ccd3.Parts.Series.Heatmap.prototype.tooltip_html = function(d){
+		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
+		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
+		var zFormat = this.chart.tooltip.zFormat || this.zFormat;
 		var html = "";
-		html += "x: " + this.chart.xAxis.format(d.x);
-		html += "<br>y: " + this.chart.yAxis.format(d.y);
-		html += "<br>z: " + this.format(d.z);
+		html += "x: " + xFormat(d.x);
+		html += "<br>y: " + yFormat(d.y);
+		html += "<br>z: " + zFormat(d.z);
 		return html;
 	};
 	
@@ -1845,9 +2102,11 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Pie.prototype = new ccd3.Parts.Series();
 	ccd3.Parts.Series.Pie.prototype.get_defaults = function(){
 		return {
-			inner_radius: 0,
+			inner_radius: 0.0,
 			radius_nofocus: 0.95,
-			opacity: 0.7
+			opacity: 0.7,
+			yFormat: undefined,
+			pFormat: ccd3.Util.default_percent_format
 		};
 	};
 	ccd3.Parts.Series.Pie.prototype.render = function(){
@@ -1858,16 +2117,13 @@ var ccd3 = function(){
 		if(this.yFormat===undefined){
 			this.yFormat = ccd3.Util.default_numeric_format;
 		}
-		if(this.pFormat===undefined){
-			this.pFormat = d3.format(".1%");
-		}
 		
 		var pie = d3.layout.pie().sort(null)
 			.value(function(d) { return d.y; });
 		
 		this.svg.attr("transform", function(){
-					return "translate("+(that.chart.inner_width/2)+","+(that.chart.inner_height/2)+")"; 
-				});
+			return "translate("+(that.chart.inner_width/2)+","+(that.chart.inner_height/2)+")"; 
+		});
 		
 		// data join
 		var pie_data = pie(this.get_data());
@@ -1899,50 +2155,190 @@ var ccd3 = function(){
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
 			.call(function(e){
 				e.append("path")
-				.attr("d",arc)
 				.style("fill",function(d,i){ return that.chart._color(i); });
 			})
 			.call(function(e){
 				e.append("text")
-				.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
 				.attr("dy", ".35em")
 				.style("text-anchor", "middle")
 				.call(function(e){
 					e.append("tspan")
+					.attr("class","label_x")
 					.attr("y","-1em")
-					.text(function(d){ return d.data.x; })
 					;
 				})
 				.call(function(e){
 					e.append("tspan")
+					.attr("class","label_p")
 					.attr("dy","1em")
 					.attr("x",0)
-					.text(function(d){ return that.pFormat((d.endAngle - d.startAngle)/Math.PI/2); })
 					;
 				})
 				.call(function(e){
 					e.append("tspan")
+					.attr("class","label_y")
 					.attr("dy","1em")
 					.attr("x",0)
-					.text(function(d){ return that.yFormat(d.data.y); })
 					;
 				});
 			});
 		
 		// update
-		// !?
+		arcs
+			.transition().duration(500)
+			.call(function(e){
+				e.select("path")
+				.attr("d",arc);
+			})
+			.call(function(e){
+				e.select("text")
+				.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+				.call(function(e){
+					e.select("tspan.label_x")
+					.text(function(d){ return d.data.x; })
+					;
+				})
+				.call(function(e){
+					e.select("tspan.label_p")
+					.text(function(d){ return that.pFormat(that.calc_percent(d)); })
+					;
+				})
+				.call(function(e){
+					e.select("tspan.label_y")
+					.text(function(d){ return that.yFormat(d.data.y); })
+					;
+				});
+			});
 		
 		// exit
 		arcs.call(this.exit);
 	};
+	ccd3.Parts.Series.Pie.prototype.calc_percent = function(d){
+		return (d.endAngle - d.startAngle) / (Math.PI * 2.0);
+	};
 	ccd3.Parts.Series.Pie.prototype.tooltip_html = function(d){
+		var yFormat = this.chart.tooltip.yFormat || this.yFormat;
 		var html = "";
 		html += "<b>" + d.data.x + "</b>";
-		html += "<br>%: " + this.pFormat((d.endAngle - d.startAngle)/Math.PI/2);
-		html += "<br>value: " + this.yFormat(d.data.y);
+		html += "<br>%: " + this.pFormat(this.calc_percent(d));
+		html += "<br>value: " + yFormat(d.data.y);
 		return html;
 	};
-
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.Series.Radar                                           */
+	/* ------------------------------------------------------------------ */
+	
+	ccd3.Parts.Series.Radar = function(){ ccd3.Parts.Series.apply(this,arguments); };
+	ccd3.Parts.Series.Radar.prototype = new ccd3.Parts.Series();
+	ccd3.Parts.Series.Radar.prototype.get_defaults = function(){
+		return {
+			point_radius: 5,
+			point_radius_highlight: 8
+		};
+	};
+	ccd3.Parts.Series.Radar.prototype.render = function(){
+		var that = this;
+		var data = this.get_data();
+		var rScale = this.chart.rAxis.scale;
+		var aScale = this.chart.aAxis.scale;
+		var i = this.series.series_num;
+		this.color = this.chart._color(i);
+		
+		var trans_xy = function(d){
+			return [
+				Math.sin(aScale(d.x))*rScale(d.y),
+				Math.cos(aScale(d.x))*rScale(d.y) * -1.0];
+		};
+		
+		this.svg.attr("transform", function(){
+			return "translate("+(that.chart.inner_width/2)+","+(that.chart.inner_height/2)+")"; 
+		});
+		
+		/* polygon */
+		var poly_data = (this.series.visible)? [0] : [];
+		var poly = this.svg.selectAll(".ccd3_poly").data(poly_data);
+		// enter
+		poly.enter()
+			.append("polygon")
+			.attr("class","ccd3_poly")
+			.attr("stroke",that.color)
+			.attr("stroke-width",2)
+			.attr("fill",that.color)
+			.attr("fill-opacity",0.1)
+			.on("mouseover", function(){
+				d3.select(this).style("fill-opacity",0.5);
+			})
+			.on("mouseout", function(){
+				d3.select(this).style("fill-opacity",0.1);
+			})
+			;
+		// update
+		poly
+			.transition().duration(500)
+			.attr("points",function(d){
+				var str="",xy;
+				for(var i=0,len=data.length;i<len;i++){
+					xy = trans_xy(data[i]);
+					str += xy[0] + "," + xy[1] + " ";
+				}
+				return str;
+			})
+			;
+		// exit
+		poly.call(this.exit);
+		
+		
+		/* points */
+		// data join
+		var points = this.svg.selectAll(".ccd3_points_g").data(data);
+		// enter
+		points.enter()
+			.append("g")
+			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.attr("class","ccd3_points_g")
+			.call(function(e){
+				e.append("circle").attr("fill",that.color).attr("r",that.point_radius);
+			})
+			.on("mouseover", function(){
+				d3.select(this).select("circle").attr("r",that.point_radius_highlight);
+			})
+			.on("mouseout", function(){
+				d3.select(this).select("circle").attr("r",that.point_radius);
+			})
+			;
+		// update
+		points
+			.transition().duration(500)
+			.attr("transform",function(d){
+				var xy = trans_xy(d);
+				return "translate("+xy[0]+","+xy[1]+")";
+			})
+			;
+		
+		// exit
+		points.call(this.exit);
+		
+	};
+	ccd3.Parts.Series.Radar.prototype.highlight = function(onoff){
+		if(onoff){
+			this.svg.selectAll(".ccd3_poly")
+				.style("fill-opacity",0.5);
+		}else{
+			this.svg.selectAll(".ccd3_poly")
+				.style("fill-opacity",0.1);
+		}
+	};
+	ccd3.Parts.Series.Radar.prototype.tooltip_html = function(d){
+		var aFormat = this.chart.tooltip.aFormat || this.chart.aAxis.format;
+		var rFormat = this.chart.tooltip.rFormat || this.chart.rAxis.format;
+		var html = "";
+		html += "<b>" + this.series.name + "</b>";
+		html += "<br>x: " + aFormat(d.x);
+		html += "<br>y: " + rFormat(d.y);
+		return html;
+	};
+	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.DatasetManager                                               */
 	/* ------------------------------------------------------------------ */
@@ -1952,7 +2348,7 @@ var ccd3 = function(){
 	};
 	ccd3.DatasetManager.prototype.setup = function(dataset){
 		var i,len;
-		var series_types = ccd3.Parts.Series.type_info();
+		var type_info = ccd3.Parts.Series.type_info();
 		
 		// deep copy dataset
 		this.dataset = ccd3.Util.copy(dataset);
@@ -1979,14 +2375,19 @@ var ccd3 = function(){
 		// check dataset
 		var st_ar = []; // st = series_type
 		for(i=0,len=dataset.length;i<len;i++){
-			if(dataset[i].series_type !== undefined && !(series_types.hasOwnProperty(dataset[i].series_type))){
+			if(dataset[i].series_type !== undefined && !(type_info.hasOwnProperty(dataset[i].series_type))){
 				throw new Error("invalid series_type");
 			}
 			st_ar.push(dataset[i].series_type);
 		}
-		if((st_ar.indexOf("heatmap")>=0 || st_ar.indexOf("pie")>=0) && st_ar.length>1){
-			throw new Error("If you use 'heatmap' or 'pie' series_type, you must set only one series in dataset.");
+		for (var key in type_info) {
+			if(type_info.hasOwnProperty(key)){
+				if(type_info[key].is_single_series && st_ar.indexOf(key)>=0 && st_ar.length>1){
+					throw new Error("If you use '"+key+"' series_type, you must set only one series in dataset.");
+				}
+			}
 		}
+		
 		if(st_ar.indexOf("bar")>=0 && st_ar.indexOf("stackedbar")>=0){
 			throw new Error("You can't use 'bar' and 'stackedbar' series_type at the same time.");
 		}
@@ -1996,6 +2397,8 @@ var ccd3 = function(){
 	ccd3.DatasetManager.prototype.detect_chart_pattern = function(){
 		if(this.dataset[0].series_type === "pie"){
 			return "r";
+		}else if(this.dataset[0].series_type === "radar"){
+			return "ra";
 		}
 		return "xy";
 	};
@@ -2039,7 +2442,7 @@ var ccd3 = function(){
 		var sort_func = function(a,b){ return b-a; };
 		for(var i=0;i<dataset.length;i++){
 			var ar = [];
-			for(var j=1;j<dataset[i].values.length;j++){
+			for(var j=0;j<dataset[i].values.length;j++){
 				ar.push(func.call(this,dataset[i].values[j]));
 			}
 			ar.sort(sort_func);
@@ -2053,7 +2456,7 @@ var ccd3 = function(){
 				}
 			}
 		}
-		return min;
+		return min; // return undefined if series has only one data
 	};
 	ccd3.DatasetManager.prototype.update_stack_values = function(direction,stack_type){
 		var dataset = this.dataset;
@@ -2204,34 +2607,18 @@ var ccd3 = function(){
 		throw new Error("Unable to copy obj! Its type isn't supported.");
 	};
 	ccd3.Util.default_numeric_format = function(d){
-		var prefix = d3.formatPrefix(d);
-		if(prefix.symbol===""){
-			if(d<1){
-				// from 0.010 to 0.999
-				return d3.round(d,3);
-			}else{
-				// from 1.01 to 999.99
-				return d3.round(d,2);
-			}
-		}else{
-			// prefix is from 0.01 to 999.99
-			return d3.round(prefix.scale(d),2) + prefix.symbol;
-		}
+		// ref https://github.com/mbostock/d3/wiki/Formatting 
+		return d3.format(",.2s")(d); // 120k
+		// return d3.format(",.0f")(d); // 123,456
+		// return d3.format(",.2f")(d); // 123,456.78
+		// return d3.format(",.3r")(d); // 123,000 or 0.0123
 	};
-	ccd3.Util.default_date_format = function(){
-			// this function require v3.4.1 or newer
-			// http://bl.ocks.org/mbostock/4149176
-			var format = d3.time.format.multi([
-				["", function(d) { return d.getMilliseconds(); }],
-				["", function(d) { return d.getSeconds(); }],
-				["", function(d) { return d.getMinutes(); }],
-				["", function(d) { return d.getHours(); }],
-				["%m/%d", function(d) { return d.getDay() && d.getDate() != 1; }],
-				["%m/%d", function(d) { return d.getDate() != 1; }],
-				["%m/%d", function(d) { return d.getMonth(); }],
-				["%Y", function() { return true; }]
-			]);
-			return format;
+	ccd3.Util.default_date_format = function(d){
+		// ref https://github.com/mbostock/d3/wiki/Time-Formatting
+		return d3.time.format("%m/%d")(d);
+	};
+	ccd3.Util.default_percent_format = function(d){
+		return d3.format(",.1%")(d);
 	};
 	ccd3.Util.swap_dataset_xy = function(dataset){
 		var tmp;

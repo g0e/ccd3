@@ -20,8 +20,8 @@ var ccd3_dataset = function(){
 			var y = 0.5 + Math.random()*0.5;
 			var z = 0.5 + Math.random()*0.5;
 			for(var j=0;j<cnt;j++){
-				y += (Math.random() - 0.5)*2/cnt;
-				z += (Math.random() - 0.5)*2/cnt;
+				y += (Math.random() - 0.5)/cnt;
+				z += (Math.random() - 0.5)/cnt;
 				tdate.setDate(tdate.getDate()+1);
 				series.push({x:new Date(tdate.getTime()), y:y*scale, z:z*scale});
 			}

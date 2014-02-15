@@ -1,0 +1,57 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./examples.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	(function(){
+		var div_id = "chart1-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_weekday({series_num:3, scale:5});
+		//var data = ccd3_dataset.random_diff({series_num:1,cnt:20});
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = "title test";
+		c.default_series_type = "radar";
+		c.height = 360;
+		c.width = 360;
+		c.render();
+	})();
+	(function(){
+		var div_id = "chart1-2";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_weekday({series_num:1, scale:5000});
+		var c = new ccd3.Chart(div_id,data);
+		c.default_series_type = "radar";
+		c.title.text = "title test";
+		c.height = 200;
+		c.width = 200;
+		c.render();
+	})();
+	(function(){
+		var div_id = "chart1-3";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = ccd3_dataset.random_weekday({series_num:7, scale:100});
+		var c = new ccd3.Chart(div_id,data);
+		c.default_series_type = "radar";
+		c.title.text = "title test";
+		c.height = 600;
+		c.width = 600;
+		c.render();
+	})();
+
+};
+-->
+		</script>
+	</head>
+	<body>
+		<h1>ccd3 radar examples</h1>
+		<a href="./index.html">back to index</a>
+		<div id="charts"></div>
+	</body>
+</html>
