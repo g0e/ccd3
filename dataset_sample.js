@@ -1,5 +1,118 @@
 // for JSHint
-/* global d3 */
+/* global d3,ccd3 */
+
+var ccd3t = function(){
+	"use strict";
+	
+	var ccd3t = {};
+	
+	ccd3t.DatasetGenerator = function(cond){
+		var default_cond = {
+			series_cnt: 3,
+			values_cnt: 20,
+			x: ccd3t.sequence_date,
+			y: ccd3t.random_int,
+			z: undefined,
+			random_ceil: 100.0,
+			random_floor: 0.0,
+			seq_start: 1.0,
+			seq_step: 1.0,
+			date_start: new Date(2014,0,1),
+			date_seq_step: 1000*60*60*24, // date
+			numeric_str_len: 5,
+			random_str_len: 8,
+			walk_start_ceil: 100.0,
+			walk_start_floor: 50.0,
+			walk_step: 1
+		};
+		if(!cond){ cond={}; }
+		ccd3.Util.merge(default_cond, cond);
+		ccd3.Util.merge(this,default_cond);
+	};
+	ccd3t.DatasetGenerator.prototype.generate = function(cond){
+		if(cond){ ccd3.Util.merge(this,cond); }
+		var axis = ["x","y","z"];
+		this.dataset = [];
+		var series,values,value,cur_axis,pos;
+		
+		for(var i=0;i<this.series_cnt;i++){
+			this.dataset.push({values:[]});
+			for(var j=0;j<this.values_cnt;j++){
+				value = {};
+				for(var k=0;k<axis.length;k++){
+					pos = { series_pos:i, value_pos:j, axis:axis[k] };
+					cur_axis = axis[k];
+					if(this[cur_axis]){
+						value[cur_axis] = this[cur_axis].call(this,pos);
+					}
+				}
+				this.dataset[i].values.push(value);
+			}
+		}
+		
+		return this.dataset;
+	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  value generator functions                                         */
+	/* ------------------------------------------------------------------ */
+	/* random_basic */
+	ccd3t.random_int = function(){
+		return parseInt((this.random_ceil - this.random_floor) * Math.random() + this.random_floor);
+	};
+	ccd3t.random_float = function(){
+		return parseFloat((this.random_ceil - this.random_floor) * Math.random() + this.random_floor);
+	};
+	ccd3t.random_str = function(){
+		var list = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		list = list.split('');
+		var str = '';
+		for (var i=0;i<this.random_str_len;i++) {
+			str += list[Math.floor(Math.random() * list.length)];
+		}
+		return str;
+	};
+	
+	/* sequence_basic */
+	ccd3t.sequence_int = function(pos){
+		return parseInt(pos.value_pos*this.seq_step + this.seq_start);
+	};
+	ccd3t.sequence_float = function(pos){
+		return parseFloat(pos.value_pos*this.seq_step + this.seq_start);
+	};
+	ccd3t.sequence_date = function(pos){
+		return new Date(pos.value_pos*this.date_seq_step + this.date_start.getTime());
+	};
+	ccd3t.sequence_str = function(pos){
+		return d3.format("0"+this.numeric_str_len+"d")(pos.value_pos);
+	};
+	
+	/* matrix */
+	ccd3t.matrix_x_int = function(pos){
+		return parseInt((pos.value_pos + 1) % Math.pow(this.values_cnt,0.5)) + 1;
+	};
+	ccd3t.matrix_y_int = function(pos){
+		return parseInt((pos.value_pos) / Math.pow(this.values_cnt,0.5)) + 1;
+	};
+	ccd3t.matrix_x_str = function(pos){
+		return d3.format("0"+this.numeric_str_len+"d")(parseInt((pos.value_pos + 1) % Math.pow(this.values_cnt,0.5)));
+	};
+	ccd3t.matrix_y_str = function(pos){
+		return d3.format("0"+this.numeric_str_len+"d")(parseInt((pos.value_pos) / Math.pow(this.values_cnt,0.5)));
+	};
+
+	/* random_walk */
+	ccd3t.random_walk_int = function(pos){
+		if(this.dataset[pos.series_pos].values[pos.value_pos-1]){
+			return parseInt(this.dataset[pos.series_pos].values[pos.value_pos-1][pos.axis] + ((Math.random() < 0.5)? 1:-1)*this.walk_step );
+		}else{
+			return parseInt((this.walk_start_ceil - this.walk_start_floor) * Math.random() + this.walk_start_floor);
+		}
+	};
+
+	return ccd3t;
+}();
+
 
 // sample dataset generator for ccd3 examples
 var ccd3_dataset = function(){

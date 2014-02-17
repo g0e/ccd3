@@ -88,12 +88,13 @@ var ccd3 = function(){
 		
 	};
 	
-	ccd3.Chart.prototype.load = function(params){
-		this.loader.load(params);
-	};
-
 	ccd3.Chart.prototype.setup_options = function(options){
 		return ccd3.Util.merge(this,options);
+	};
+		
+	ccd3.Chart.prototype.set_dataset = function(dataset){
+		this.dataset = dataset;
+		this.initialized = false;
 	};
 	
 	ccd3.Chart.prototype.render = function(cond){
@@ -125,8 +126,10 @@ var ccd3 = function(){
 				this.title.sizeof("height")
 			);
 			
+			var top_margin=0;
+			if(this.title.sizeof("height") + this.legend.sizeof("height") === 0){ top_margin=10; }
 			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height") - 
-				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height");
+				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height") - top_margin;
 			
 			this.xAxis.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
@@ -134,13 +137,13 @@ var ccd3 = function(){
 			);
 			this.yAxis.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-				this.title.sizeof("height") + this.legend.sizeof("height")
+				this.title.sizeof("height") + this.legend.sizeof("height") + top_margin
 			);
 			
 			this.series_container.render(this.inner_width,this.inner_height);
 			this.series_container.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-				this.title.sizeof("height") + this.legend.sizeof("height")
+				this.title.sizeof("height") + this.legend.sizeof("height") + top_margin
 			);
 			
 			// must call after series_container setup
@@ -807,11 +810,9 @@ var ccd3 = function(){
 			// not to show same tick_label twice, force tickValues by Axis.format
 			var cur_ticks = this.scale.ticks();
 			var new_ticks = [];
-			/*
 			if(cur_ticks.length>=2 && this.format(cur_ticks[0]) != this.format(cur_ticks[1])){
 				new_ticks.push(cur_ticks[0]);
 			}
-			*/
 			var prev=cur_ticks[0];
 			for(var i=1,len=cur_ticks.length;i<len;i++){
 				if(this.format(prev)!=this.format(cur_ticks[i])){
@@ -857,12 +858,12 @@ var ccd3 = function(){
 				min = undefined;
 				max = undefined;
 			}else if(this.direction !== this.chart.direction && this.domain_margin_type !== "grid"){
-				if(min > 0 && min - (max-min)*this.domain_margin < 0){
+				if(min >= 0 && min - (max-min)*this.domain_margin < 0){
 					min = 0;
 				}else{
 					min = min - (max-min)*this.domain_margin;
 				}
-				if(max < 0 && max + (max-min)*this.domain_margin > 0){
+				if(max <= 0 && max + (max-min)*this.domain_margin > 0){
 					max = 0;
 				}else{
 					max = max + (max-min)*this.domain_margin;
@@ -936,6 +937,14 @@ var ccd3 = function(){
 				})
 			;
 		
+		/*
+		this.svg.selectAll(".ccd3_xAxis path, .ccd3_xAxis .tick line")
+			.attr("fill","none")
+			.attr("stroke","lightgray")
+			.attr("stroke-width",1)
+			;
+		*/
+		
 		this.text_height = d3.max(this.svg.selectAll(".ccd3_x_tick_label")[0].map(function(e){ 
 			return e.getBBox().width;
 		}));
@@ -985,6 +994,14 @@ var ccd3 = function(){
 				.attr("class","ccd3_y_tick_label")
 				.attr("font-size",this.font_size)
 			;
+		
+		/*
+		this.svg.selectAll(".ccd3_yAxis path, .ccd3_yAxis .tick line")
+			.attr("fill","none")
+			.attr("stroke","lightgray")
+			.attr("stroke-width",1)
+			;
+		*/
 		
 		this.text_width = d3.max(this.svg.selectAll(".ccd3_y_tick_label")[0].map(function(e){ 
 			return e.getBBox().width;
@@ -2151,6 +2168,7 @@ var ccd3 = function(){
 			.append("g")
 			.attr("class","ccd3_arc_g")
 			.style("opacity",this.opacity)
+			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
 			.on("mouseover", function(){
 				d3.select(this)
 					.style("opacity",1)
@@ -2169,7 +2187,6 @@ var ccd3 = function(){
 						return arc(d);
 					});
 			})
-			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
 			.call(function(e){
 				e.append("path")
 				.style("fill",function(d,i){ return that.chart._color(i); });
@@ -2178,10 +2195,12 @@ var ccd3 = function(){
 				e.append("text")
 				.attr("dy", ".35em")
 				.style("text-anchor", "middle")
+				.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
 				.call(function(e){
 					e.append("tspan")
 					.attr("class","label_x")
 					.attr("y","-1em")
+					.text(function(d){ return d.data.x; })
 					;
 				})
 				.call(function(e){
@@ -2189,6 +2208,7 @@ var ccd3 = function(){
 					.attr("class","label_p")
 					.attr("dy","1em")
 					.attr("x",0)
+					.text(function(d){ return that.pFormat(that.calc_percent(d)); })
 					;
 				})
 				.call(function(e){
@@ -2196,8 +2216,10 @@ var ccd3 = function(){
 					.attr("class","label_y")
 					.attr("dy","1em")
 					.attr("x",0)
+					.text(function(d){ return that.yFormat(d.data.y); })
 					;
-				});
+				})
+				;
 			});
 		
 		// update
@@ -2224,7 +2246,19 @@ var ccd3 = function(){
 					e.select("tspan.label_y")
 					.text(function(d){ return that.yFormat(d.data.y); })
 					;
-				});
+				})
+				.style("visibility",function(d){
+					var text_width = this.getBBox().width;
+					var text_height = this.getBBox().height;
+					var arc_width = Math.abs(Math.cos(d.startAngle) - Math.cos(d.endAngle))*radius/2;
+					var arc_height = Math.abs(Math.sin(d.startAngle) - Math.sin(d.endAngle))*radius/2;
+					if(arc_width>=text_width || arc_height>=text_height){
+						return "visible";
+					}else{
+						return "hidden";
+					}
+				})
+				;
 			});
 		
 		// exit
@@ -2435,7 +2469,7 @@ var ccd3 = function(){
 	ccd3.DatasetManager.prototype.has_directive_series_type = function(){
 		var directives = ["bar","stackedbar","line"];
 		for(var i=0,len=this.dataset.length;i<len;i++){
-			if(directives.indexOf(this.dataset[i]) >= 0){
+			if(directives.indexOf(this.dataset[i].series_type) >= 0){
 				return true;
 			}
 		}
@@ -2531,51 +2565,41 @@ var ccd3 = function(){
 
 	ccd3.DatasetLoader = function(chart){
 		this.chart = chart;
-		this.source = undefined; // function or base_url
-		this.params = undefined; // arguments for function or url get-params(js obj)
-		this.before_filter = undefined;
-		this.after_filter = undefined;
+		this.base_url = undefined;
+		this.url_params = {};
+		this.dataset_filter = undefined;
 	};
-	ccd3.DatasetLoader.prototype.load = function(params){
-		if(typeof this.source === "function"){
-			// load data by javascript-function
-			var p = ccd3.Util.merge(this.params, params);
-			if(this.before_filter){
-				p = this.before_filter.apply(this,[p]);
+	ccd3.DatasetLoader.prototype.xhr_load = function(params){
+		var url = this.setup_url(params,this.base_url);
+		d3.json(url,function(dataset){
+			if(this.dataset_filter){
+				dataset = this.dataset_filter.apply(this,[dataset]);
 			}
-			var dataset = this.source.apply(this,[p]);
-			if(this.after_filter){
-				dataset = this.after_filter.apply(this,[dataset]);
-			}
-			this.chart.dataset = dataset;
-			this.chart.initialized = false;
+			this.chart.set_dataset(dataset);
 			this.chart.render();
-		}else if(typeof this.source === "string"){
-			var url;
-			// load data by url
-			params = ccd3.Util.merge(this.params, params);
-			var setup_params = function(base_url,params){
-				var str = "";
-				for(var key in params){
-					if(str!==""){ str += "&"; }
-					str += key + "=" + params[key];
-				}
-				return base_url + "?" + str;
-			};
-			if(this.before_filter){
-				url = this.before_filter.apply(this,[this.source, params, setup_params]);
-			}else{
-				url = setup_params(this.source, params);
+		}.bind(this));
+	};
+	ccd3.DatasetLoader.prototype.setup_url = function(params,url){
+		if(!url){ url = this.base_url; }
+		params = ccd3.Util.merge(this.url_params, params);
+		var params_str = "";
+		var urls = url.split("?");
+		var base_params_ar,base_params = {},param;
+		if(urls[1]){
+			base_params_ar = urls[1].split("&");
+			for(var i=0;i<base_params_ar.length;i++){
+				param = base_params_ar[i].split("=");
+				base_params[param[0]] = param[1];
 			}
-			d3.json(url,function(dataset){
-				if(this.after_filter){
-					dataset = this.after_filter.apply(this,[dataset]);
-				}
-				this.chart.dataset = dataset;
-				this.chart.initialized = false;
-				this.chart.render();
-			}.bind(this));
 		}
+		ccd3.Util.merge(base_params,params);
+		for(var key in base_params){
+			if(base_params.hasOwnProperty(key) && base_params[key] !== null){
+				if(params_str!==""){ params_str += "&"; }
+				params_str += key + "=" + base_params[key];
+			}
+		}
+		return urls[0] + "?" + params_str;
 	};
 
 	/* ------------------------------------------------------------------ */
@@ -2637,15 +2661,55 @@ var ccd3 = function(){
 	ccd3.Util.default_percent_format = function(d){
 		return d3.format(",.1%")(d);
 	};
-	ccd3.Util.swap_dataset_xy = function(dataset){
-		var tmp;
+	ccd3.Util.each_data = function(dataset,func){
 		for(var i=0,len=dataset.length;i<len;i++){
 			for(var j=0,len2=dataset[i].values.length;j<len2;j++){
-				tmp = dataset[i].values[j].x;
-				dataset[i].values[j].x = dataset[i].values[j].y;
-				dataset[i].values[j].y = tmp;
+				func(dataset[i].values[j]);
 			}
 		}
+		return dataset;
+	};
+	ccd3.Util.swap_dataset_xy = function(dataset){
+		ccd3.Util.each_data(dataset,function(d){
+			var tmp = d.x;
+			d.x = d.y;
+			d.y = tmp;
+		});
+		return dataset;
+	};
+	ccd3.Util.dataset_from_array = function(ar,rules,options){
+		if(!options){ options = {}; }
+		var dataset = [],values,value,v;
+		var rule,header;
+		
+		if(!(rules instanceof Array)){ rules = [rules]; }
+		
+		if(options.header_row){
+			header = ar.shift();
+		}
+		
+		for(var i=0;i<rules.length;i++){
+			rule = rules[i];
+			values = [];
+			for(var j=0;j<ar.length;j++){
+				value = {};
+				if(rule.x !== undefined){
+					v = ar[j][rule.x];
+					value.x = (rule.x_format)? rule.x_format(v) : v;
+				}
+				if(rule.y !== undefined){
+					v = ar[j][rule.y];
+					value.y = (rule.y_format)? rule.y_format(v) : v;
+				}
+				if(rule.z !== undefined){
+					v = ar[j][rule.z];
+					value.z = (rule.z_format)? rule.z_format(v) : v;
+				}
+				values.push(value);
+			}
+			dataset.push({values:values});
+		}
+		
 		return dataset;
 	};
 	

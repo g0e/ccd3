@@ -16,19 +16,13 @@ window.onload = function(){
 		
 		var c = new ccd3.Chart(div_id);
 		c.default_series_type = "stackedbar";
-		c.title = "dataset reload by javascript-function";
-		c.loader.source = ccd3_dataset.random_diff;
-		c.loader.params = {cnt:20, series_num:2, scale:10};
-		c.loader.before_filter = function(params){
-			if(params["cnt"] < 10){
-				params["cnt"] = 10;
-			}
-			return params;
-		};
-		c.loader.after_filter = function(dataset){
-			return dataset;
-		};
-		c.load();
+		c.title.text = "dataset reload by javascript-function";
+		
+		var cond = {};
+		var generator = new ccd3t.DatasetGenerator(cond);
+		var dataset = generator.generate();
+		c.set_dataset(dataset);
+		c.render();
 		
 		d3.select("#func_form")
 			.on("submit",function(e){
@@ -39,8 +33,10 @@ window.onload = function(){
 						if(f.attr("name") && f.property("value")){
 							values[f.attr("name")] = f.property("value");
 						}
-					})
-				c.load(values);
+					});
+				ccd3.Util.merge(cond,values);
+				c.set_dataset(generator.generate(cond));
+				c.render();
 			});
 	})();
 	
@@ -49,18 +45,15 @@ window.onload = function(){
 		d3.select("#chart_ajax").append("div").attr("id",div_id).style("margin","20px");
 		
 		var c = new ccd3.Chart(div_id);
-		c.title = "dataset ajax reload";
+		c.title.text = "dataset ajax reload";
 		c.default_series_type = "line";
-		c.loader.source = "./../data_source/sample_json.py";
-		c.loader.params = {cnt:20, series_num:2, scale:10};
-		c.loader.before_filter = function(url,params,func){
-			return func(url,params);
-		};
-		c.loader.after_filter = function(dataset){
+		c.loader.base_url = "./../data_source/sample_json.py?cnt=30";
+		c.loader.url_params = {series_num:2, scale:10};
+		c.loader.dataset_filter = function(dataset){
 			dataset[0].visible = false;
 			return dataset;
 		};
-		c.load();
+		c.loader.xhr_load();
 		
 		d3.select("#ajax_form")
 			.on("submit",function(e){
@@ -72,7 +65,7 @@ window.onload = function(){
 							values[f.attr("name")] = f.property("value");
 						}
 					})
-				c.load(values);
+				c.loader.xhr_load(values);
 			});
 		
 	})();
@@ -88,9 +81,8 @@ window.onload = function(){
 			<div id="chart_func">
 			</div>
 			<form id="func_form" onsubmit="return false;">
-				series_num:<input type="text" name="series_num" size=5 />
-				cnt:<input type="text" name="cnt" size=5 />
-				scale:<input type="text" name="scale" size=5/>
+				series_cnt:<input type="text" name="series_cnt" size=5 />
+				values_cnt:<input type="text" name="values_cnt" size=5 />
 				<input type="submit" name="reload">
 			</form>
 		</div>
