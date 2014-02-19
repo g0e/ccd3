@@ -1,0 +1,66 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./examples.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	/* Most Simple Example */
+	var dataset = [{ values:[ {x:"a",y:1}, {x:"b",y:2}, {x:"c",y:3} ] }];
+	var c1 = new ccd3.Chart("chart1",dataset);
+	c1.render();
+	
+	/* Customize Chart pattern1 */
+	var c2 = new ccd3.Chart("chart2",dataset);
+	var options = {
+		default_series_type: "bar",
+		title: {text:"Bar Chart"},
+		xLabel: {text:"alphabet"},
+		legend: {show: false}
+	};
+	c2.setup_options(options);
+	c2.render();
+	
+	/* Customize Chart pattern2 */
+	var c3 = new ccd3.Chart("chart3",dataset);
+	c3.default_series_type = "bar";
+	c3.title.text = "Bar Chart";
+	c3.xLabel.text = "alphabet";
+	c3.legend.show = false;
+	c3.render();
+	
+	/* Updating Chart */
+	var c4 = new ccd3.Chart("chart4",dataset);
+	c4.render();
+	dataset = [{ values:[ {x:"a",y:1}, {x:"b",y:2}, {x:"c",y:3}, {x:"d",y:4}, {x:"e",y:5} ] }];
+	c4.set_dataset(dataset); // update dataset
+	c4.render(); // re-render chart
+	
+	c4 = null;
+	dataset = [
+		{ values:[ {x:"a",y:1}, {x:"b",y:2}, {x:"c",y:3}, {x:"d",y:4}, {x:"e",y:5} ] },
+		{ values:[ {x:"a",y:6}, {x:"b",y:7}, {x:"c",y:8}, {x:"d",y:9}, {x:"e",y:10} ] }
+	];
+	c4 = ccd3.instances["chart4"]; // you can find chart instance by ccd3.instances[div_id]
+	c4.set_dataset(dataset);
+	c4.render();
+	
+};
+-->
+		</script>
+	</head>
+	<body>
+		<div id="charts">
+			<div id="chart1"></div>
+			<div id="chart2"></div>
+			<div id="chart3"></div>
+			<div id="chart4"></div>
+		</div>
+	</body>
+</html>
+

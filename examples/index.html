@@ -19,7 +19,6 @@
 window.onload = function(){
 	(function(){
 		var div_id = "chart1";
-		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
 		/* prepare dataset */
 
 		var cond = {
@@ -41,16 +40,16 @@ window.onload = function(){
 		
 		var c = new ccd3.Chart(div_id,data);
 		//c.show_values = "always";
-		
+		c.menu.show = true;
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
-		c.title.text = "Sample Chart1";
+		//c.title.text = "Sample Chart1";
 		c.default_series_type = "bar";
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
 		//c.yAxis.domain_min = 0;
 		//c.yAxis.domain_max = 1;
-		//c.xAxis.domain_min = 0;
+		//c	.xAxis.domain_min = 0;
 		//c.xAxis.domain_max = 1;
 		//c.legend.show = false;
 		//c.tooltip.show = false;
@@ -86,6 +85,8 @@ window.onload = function(){
 			<li><a href="./form_ajax.html">form ajax examples</a></li>
 			<li><a href="./black_background.html">black background example</a></li>
 		</ul>
-		<div id="charts"></div>
+		<div id="charts">
+			<div id="chart1"></div>
+		</div>
 	</body>
 </html>

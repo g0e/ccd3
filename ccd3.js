@@ -31,7 +31,7 @@ var ccd3 = function(){
 			return ccd3.instances[t];
 		}else{
 			// by DOM element
-			return ccd3.instances[d3.select(t.farthestViewportElement).attr("id")];
+			return ccd3.instances[d3.select(t.farthestViewportElement).attr("id").replace(/^svg_/g,"")];
 		}
 	};
 	ccd3.instances = {};
@@ -43,7 +43,7 @@ var ccd3 = function(){
 
 	ccd3.Chart = function(div_id,dataset){
 		this.div_id = div_id;
-		ccd3.instances["svg_"+div_id] = this;
+		ccd3.instances[div_id] = this;
 		
 		// ccd3.Parts holder
 		this.series_container = {};
@@ -57,6 +57,7 @@ var ccd3 = function(){
 		this.aAxis = {};
 		this.legend = { show:true };
 		this.tooltip = { show:true };
+		this.menu = { show:false };
 		this.zoom = { use:true };
 		this.series = [];
 		this.series_options = {};
@@ -127,7 +128,7 @@ var ccd3 = function(){
 			);
 			
 			var top_margin=0;
-			if(this.title.sizeof("height") + this.legend.sizeof("height") === 0){ top_margin=10; }
+			if(this.title.sizeof("height") + this.legend.sizeof("height") === 0){ top_margin=22; }
 			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height") - 
 				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height") - top_margin;
 			
@@ -206,6 +207,7 @@ var ccd3 = function(){
 		}
 		
 		this.render_series();
+		this.menu.render();
 	};
 	
 	ccd3.Chart.prototype.init = function(cond){
@@ -231,6 +233,7 @@ var ccd3 = function(){
 				.attr("class","ccd3")
 				.attr("width",this.width)
 				.attr("height",this.height)
+				.attr("overflow","hidden") // for IE
 				;
 		}
 		this.inner_width = this.width;
@@ -293,6 +296,14 @@ var ccd3 = function(){
 			}
 		}
 		
+		if(!(this.menu instanceof ccd3.Parts)){
+			if(this.menu.show){
+				this.menu = new ccd3.Parts.Menu(this,this.menu);
+			}else{
+				this.menu = new ccd3.Parts(this,this.menu);
+			}
+		}
+	
 		if(this.chart_pattern === "xy"){
 			if(!(this.xLabel instanceof ccd3.Parts)){
 				if(this.xLabel.text===undefined){
@@ -571,7 +582,7 @@ var ccd3 = function(){
 		return {
 			show: true,
 			font_size: 10,
-			margin_top: 3,
+			margin_top: 5,
 			margin_bottom: 3,
 			margin_left: 5,
 			margin_right: 5,
@@ -738,7 +749,119 @@ var ccd3 = function(){
 				;
 		});
 	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.Menu                                                   */
+	/* ------------------------------------------------------------------ */
 
+	ccd3.Parts.Menu = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.Menu.prototype = new ccd3.Parts();
+	ccd3.Parts.Menu.prototype.get_defaults = function(){
+		return {
+			menus: [ 
+				{label:"CSV Download", func:function(){ ccd3.Util.download_as_csv(ccd3.Util.csv_from_dataset(this.dataset)); } },
+				{label:"close", func:function(){ this.menu.toggle_menu(); }}
+			],
+			opened: false,
+			font_size: 10,
+			icon_top: 2,
+			icon_height: 15,
+			icon_width: 24,
+			icon_right: 5,
+			item_x_margin: 10,
+			item_y_margin: 5,
+		};
+	};
+	ccd3.Parts.Menu.prototype.add_menu = function(obj){
+		this.menus.splice(this.menus.length-1,0,obj);
+	};
+	ccd3.Parts.Menu.prototype.render = function(){
+		if(this.svg !== undefined){ return; }
+		var that = this;
+		
+		// render menu icon(triple line)
+		this.svg = this.chart.svg.append("g").attr("class","ccd3_menu");
+		this.svg_icon = this.svg.append("g").attr("class","ccd3_menu_icon");
+		this.svg_list = this.svg.append("g").attr("class","ccd3_menu_list");
+		
+		this.svg_icon.append("rect").attr("class","ccd3_menu_rect")
+			.attr("width",this.icon_width).attr("height",this.icon_height).attr("fill","white");
+		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",1);
+		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",6);
+		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",11);
+		this.svg_icon.selectAll(".ccd3_menu_bar")
+			.attr("width",20).attr("height",2).attr("rx",2).attr("ry",2)
+			.attr("x",2)
+			.attr("fill","gray");
+		this.arrange(this.chart.width-this.icon_width-this.icon_right,this.icon_top);
+		
+		this.svg_icon.on("click",function(e){
+			if(that.opened){
+				that.toggle_menu();
+			}else{
+				that.toggle_menu();
+			}
+		});
+	};
+	ccd3.Parts.Menu.prototype.toggle_menu = function(){
+		var that = this;
+		var data = (this.opened)? [] : this.menus;
+		this.opened = !(this.opened);
+		
+		var closed_xy = function(d,i){
+			var x = that.icon_width + 20;
+			var y = that.icon_top + that.icon_height + that.font_size + i*30 + 10;
+			return "translate("+x+","+y+")";
+		};
+		var opened_xy = function(d,i){
+			var x = -1 * this.getBBox().width + that.icon_width + that.item_x_margin + 40;
+			var y = that.icon_top + that.icon_height + that.font_size + i*30 + 10;
+			return "translate("+x+","+y+")";
+		};
+		
+		var menus = this.svg_list.selectAll(".ccd3_menu_item").data(data);
+		
+		// enter
+		menus.enter()
+			.append("g")
+			.attr("class","ccd3_menu_item")
+			.attr("cursor","pointer")
+			.call(function(e){
+				e.append("rect").attr("fill","white").attr("stroke","gray")
+					.attr("rx",8).attr("ry",8);
+			})
+			.call(function(e){
+				e.append("text").text(function(d){ return d.label; }).attr("font-size",this.font_size);
+			})
+			.on("mouseover",function(e){
+				d3.select(this).select("rect").attr("fill","lightyellow");
+			})
+			.on("mouseout",function(e){
+				d3.select(this).select("rect").attr("fill","white");
+			})
+			.on("click",function(e){
+				d3.select(this).datum().func.call(that.chart);
+			})
+			.attr("transform",closed_xy)
+			;
+		// update
+		menus.selectAll(".ccd3_menu_item rect")
+			.attr("x",function(){ return that.item_x_margin*-1; })
+			.attr("y",function(){ return this.nextSibling.getBBox().height/-2 + that.item_y_margin*-2; })
+			.attr("width",function(){ return this.nextSibling.getBBox().width + that.item_x_margin*2 + 30; })
+			.attr("height",function(){ return this.nextSibling.getBBox().height + that.item_y_margin*2; })
+			;
+		menus
+			.transition().duration(500)
+			.attr("transform",opened_xy)
+			;
+		// exit
+		menus.exit()
+			.transition().duration(500)
+			.attr("transform",closed_xy)
+			.remove();
+		
+	};
 	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Axis                                                   */
@@ -802,7 +925,7 @@ var ccd3 = function(){
 	ccd3.Parts.Axis.prototype.reset_range = function(range_max){
 		this.range_max = range_max;
 		if(this.scale_type === "ordinal"){
-			this.scale.rangeRoundBands([this.range_min, this.range_max], this.band_padding);
+			this.scale.rangeBands([this.range_min, this.range_max], this.band_padding);
 			this.tick_values = undefined;
 		}else if(this.scale_type === "date"){
 			this.scale.range([this.range_min, this.range_max]);
@@ -2711,6 +2834,44 @@ var ccd3 = function(){
 		}
 		
 		return dataset;
+	};
+	ccd3.Util.csv_from_dataset = function(dataset){
+		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
+		
+		for(i=0;i<dataset.length;i++){
+			for(j=0;j<dataset[i].values.length;j++){
+				row = [dataset[i].name];
+				d = dataset[i].values[j];
+				if(d.x!==undefined){ row.push(d.x); }else{ row.push(""); }
+				if(d.y!==undefined){ row.push(d.y); }else{ row.push(""); }
+				if(d.z!==undefined){ row.push(d.z); }else{ row.push(""); }
+				ar.push(row);
+			}
+		}
+		for(i=0;i<ar.length;i++){
+			csv += '"' + ar[i].join('","') + '"\n';
+		}
+		return csv;
+	};
+	ccd3.Util.download_as_csv = function(file_contents,file_name){
+		if(file_name===undefined){ file_name = "data.csv"; }
+		
+		var form = document.createElement("form");
+		document.body.appendChild(form);
+		var input = document.createElement("input");
+		input.setAttribute("type","hidden");
+		input.setAttribute("name","file_name");
+		input.setAttribute("value",file_name);
+		form.appendChild(input);
+		var input2 = document.createElement("input");
+		input2.setAttribute("type","hidden");
+		input2.setAttribute("name","file_contents");
+		input2.setAttribute("value",file_contents);
+		form.appendChild(input2);
+		form.setAttribute("action","./../server/echo_csv.php"); // TODO configurable
+		form.setAttribute("method","POST");
+		form.submit();
+		document.body.removeChild(form);
 	};
 	
 	return ccd3;
