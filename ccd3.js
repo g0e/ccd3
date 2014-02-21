@@ -201,13 +201,12 @@ var ccd3 = function(){
 			
 			this.inner_width = this.width;
 			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height");
-			var radius = Math.min(this.inner_height,this.inner_width)/2*0.9;
-			if(this.inner_height > this.inner_width){
-				this.title.arrange(this.width/2, (this.inner_height-radius*2)/2 + this.title.sizeof("height")/2);
-				this.legend.arrange(0, (this.inner_height-radius*2)/2 + this.title.sizeof("height"));
-			}else{
-				this.legend.arrange((this.width - legend_width)/2,this.title.sizeof("height"));
-			}
+			var radius = Math.min(this.inner_height,this.inner_width)/2;
+			this.title.arrange(this.width/2, (this.inner_height-radius*2)/2);
+			this.legend.arrange(
+				(this.width - legend_width)/2,
+				(this.inner_height-radius*2)/2 + this.title.sizeof("height")
+			);
 			
 			if(!cond.dont_reset_domain){
 				this.rAxis.reset_domain();
@@ -242,6 +241,23 @@ var ccd3 = function(){
 			);
 		}
 		
+		/*
+		this.menu.add_menu({
+			key: "test",
+			label: "test",
+			func: function(){
+				var cur_domain = this.xAxis.scale.domain();
+				var new_domain = [];
+				for(var i=0;i<cur_domain.length;i++){
+					new_domain.unshift(cur_domain[i]);
+				}
+				this.xAxis.scale.domain(new_domain);
+				//this.initialized = false;
+				this.render({dont_reset_domain:true});
+			}
+		},"test");
+		*/
+		
 		this.render_series();
 		this.menu.render();
 	};
@@ -253,7 +269,7 @@ var ccd3 = function(){
 			this.color_palette = ["#3498db","#e74c3c","#2ecc71","#f1c40f","#e67e22","#1abc9c",
 				"#2980b9","#c0392b","#27ae60","#f39c12","#d35400","#16a085"];
 		}
-			
+		
 		if(!cond.dont_recalc_dataset){
 			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
 				this.dataset_manager = new ccd3.DatasetManager(this);
@@ -342,6 +358,7 @@ var ccd3 = function(){
 				this.menu = new ccd3.Parts.Menu(this,this.menu);
 			}else{
 				this.menu = new ccd3.Parts(this,this.menu);
+				this.menu.add_menu = function(){};
 			}
 		}
 	
@@ -655,8 +672,8 @@ var ccd3 = function(){
 		return {
 			show: true,
 			font_size: 10,
-			margin_top: 0,
-			margin_bottom: 0,
+			margin_top: 3,
+			margin_bottom: 3,
 			margin_left: 5,
 			margin_right: 5,
 			legend_height: 0,
@@ -832,8 +849,8 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(){
 		return {
 			menus: [ 
-				{label:"CSV Download", func:function(){ this.download_as_csv(this.to_csv()); } },
-				{label:"close", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"csv", label:"CSV Download", func:function(){ this.download_as_csv(this.to_csv()); } },
+				{ key:"close", label:"close", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
@@ -847,8 +864,18 @@ var ccd3 = function(){
 			item_opacity: 0.8
 		};
 	};
-	ccd3.Parts.Menu.prototype.add_menu = function(obj){
-		this.menus.splice(this.menus.length-1,0,obj);
+	ccd3.Parts.Menu.prototype.add_menu = function(obj,key){
+		if(!(key)){
+			this.menus.splice(this.menus.length-1,0,obj);
+		}else{
+			for(var i=0;i<this.menus.length;i++){
+				if(this.menus[i].key == key){
+					this.menus[i] = obj;
+					return;
+				}
+			}
+			this.add_menu(obj); // if existing entry is not found, insert it
+		}
 	};
 	ccd3.Parts.Menu.prototype.render = function(){
 		var that = this;
@@ -1348,8 +1375,8 @@ var ccd3 = function(){
 				e.select("text")
 				.text(function(d){ return that.format(d); })
 				.attr("transform",function(d){
-					var x=that.radius*Math.sin(that.scale(d));
-					var y=that.radius*Math.cos(that.scale(d))*-1.0;
+					var x=(that.radius - that.font_size)*Math.sin(that.scale(d));
+					var y=(that.radius - that.font_size)*Math.cos(that.scale(d))*-1.0;
 					var w=this.getBBox().width;
 					if(x+w/2 > that.chart.inner_width/2){ // not to overflow
 						x = that.chart.inner_width/2 - w/2;

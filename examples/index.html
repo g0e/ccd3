@@ -23,8 +23,8 @@ window.onload = function(){
 		/* prepare dataset */
 
 		var cond = {
-			series_cnt:3,
-			values_cnt:25,
+			series_cnt:1,
+			values_cnt:20,
 			x: ccd3t.sequence_str,
 			//x: ccd3t.matrix_x_str,
 			y: ccd3t.random_int
@@ -32,8 +32,7 @@ window.onload = function(){
 			//z: ccd3t.random_int,
 		};
 		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		data[0].values[0].x = "あああ";
-		ccd3.Util.swap_dataset_xy(data);
+		//ccd3.Util.swap_dataset_xy(data);
 		//var data = ccd3_dataset.random_weekday({cnt:2});
 		//var data = ccd3_dataset.random_xylabel({cnt:10});
 		//var data = ccd3_dataset.random_xylabel({series_num:3, cnt:20});
