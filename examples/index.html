@@ -32,6 +32,7 @@ window.onload = function(){
 			//z: ccd3t.random_int,
 		};
 		var data = (new ccd3t.DatasetGenerator(cond)).generate();
+		data[0].values[0].x = "あああ";
 		ccd3.Util.swap_dataset_xy(data);
 		//var data = ccd3_dataset.random_weekday({cnt:2});
 		//var data = ccd3_dataset.random_xylabel({cnt:10});
@@ -93,7 +94,7 @@ window.onload = function(){
 			<li><a href="./resize.html">resize example</a></li>
 		</ul>
 		<div id="charts">
-			<div id="chart1" style="width:100%;height:100%;">
+			<div id="chart1" style="width:80%;height:50%;">
 			</div>
 		</div>
 	</body>

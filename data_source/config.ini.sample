@@ -1,5 +1,0 @@
-[mysql]
-host = hoge
-user = piyo
-passwd = foo
-db = bar
