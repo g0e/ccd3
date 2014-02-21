@@ -18,13 +18,14 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.9.3"
+		version: "0.9.4"
 	};
 	
 	/* ------------------------------------------------------------------ */
-	/*  ccd3.functions                                                    */
+	/*  ccd3 globals                                                      */
 	/* ------------------------------------------------------------------ */
 
+	ccd3.instances = {};
 	ccd3.get_instance = function(t){
 		if(typeof t === "string"){
 			// by div id
@@ -34,8 +35,22 @@ var ccd3 = function(){
 			return ccd3.instances[d3.select(t.farthestViewportElement).attr("id").replace(/^svg_/g,"")];
 		}
 	};
-	ccd3.instances = {};
 	
+	ccd3.options = {};
+	ccd3.options.echo_script = "server/echo_csv.php"; // use .php or .py or .rb
+	// get script's own path
+	ccd3.options.ccd3_path = (function(){
+		var scripts=document.getElementsByTagName('script');
+		var src = scripts[scripts.length-1].src;
+		var paths = src.split("/");
+		if(paths.length==1){ return src; }
+		paths[paths.length-1] = "";
+		return paths.join("/");
+	})();
+	// for CSV download function
+	ccd3.options.csv_echo_path = function(){
+		return ccd3.options.ccd3_path + ccd3.options.echo_script;
+	};
 	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Charts                                                       */
@@ -73,6 +88,7 @@ var ccd3 = function(){
 		this.color_palette = undefined;
 		this.height = 320;
 		this.width = 480;
+		this.auto_resize = false;
 		this.chart_pattern = undefined;
 		this.direction = undefined;
 		this.show_values = "onzoom"; // always, onzoom
@@ -98,14 +114,31 @@ var ccd3 = function(){
 		this.initialized = false;
 	};
 	
+	ccd3.Chart.prototype.resize = function(){
+		this.width = (d3.select("#"+this.div_id)[0][0].clientWidth || this.width);
+		this.height = (d3.select("#"+this.div_id)[0][0].clientHeight || this.height);
+		this.initialized = false;
+	};
+	
 	ccd3.Chart.prototype.render = function(cond){
 		if(cond === undefined){ cond = {}; }
 		
-		if(!this.initialized){
-			this.init();
+		if(this.auto_resize){
+			this.resize();
+			var that = this;
+			d3.select(window).on("resize."+this.div_id,function(){
+				that.resize();
+				that.render({dont_recalc_dataset:true});
+			});
 		}
 		
-		this.dataset_manager.update_stack_values(this.direction,this.stack_type);
+		if(!this.initialized){
+			this.init(cond);
+		}
+		
+		if(!cond.dont_recalc_dataset){
+			this.dataset_manager.update_stack_values(this.direction,this.stack_type);
+		}
 		
 		if(this.chart_pattern === "xy"){
 			if(!cond.dont_reset_domain){
@@ -120,6 +153,11 @@ var ccd3 = function(){
 			var right_margin = 10;
 			this.inner_width = this.width - this.yLabel.sizeof("width") - this.yAxis.sizeof("label_width") - right_margin;
 			
+			var top_margin = 20;
+			if(this.title.sizeof("height") < top_margin){
+				this.title.height = top_margin;
+			}
+			
 			// call after fixed inner_width
 			this.legend.render(this.inner_width);
 			this.legend.arrange(
@@ -127,10 +165,8 @@ var ccd3 = function(){
 				this.title.sizeof("height")
 			);
 			
-			var top_margin=0;
-			if(this.title.sizeof("height") + this.legend.sizeof("height") === 0){ top_margin=22; }
 			this.inner_height = this.height - this.title.sizeof("height") - this.legend.sizeof("height") - 
-				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height") - top_margin;
+				this.xAxis.sizeof("label_height") - this.xLabel.sizeof("height");
 			
 			this.xAxis.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
@@ -138,13 +174,13 @@ var ccd3 = function(){
 			);
 			this.yAxis.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-				this.title.sizeof("height") + this.legend.sizeof("height") + top_margin
+				this.title.sizeof("height") + this.legend.sizeof("height")
 			);
 			
 			this.series_container.render(this.inner_width,this.inner_height);
 			this.series_container.arrange(
 				this.yLabel.sizeof("width") + this.yAxis.sizeof("label_width"), 
-				this.title.sizeof("height") + this.legend.sizeof("height") + top_margin
+				this.title.sizeof("height") + this.legend.sizeof("height")
 			);
 			
 			// must call after series_container setup
@@ -218,37 +254,42 @@ var ccd3 = function(){
 				"#2980b9","#c0392b","#27ae60","#f39c12","#d35400","#16a085"];
 		}
 			
-		if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
-			this.dataset_manager = new ccd3.DatasetManager(this);
+		if(!cond.dont_recalc_dataset){
+			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
+				this.dataset_manager = new ccd3.DatasetManager(this);
+			}
+			this.dataset = this.dataset_manager.setup(this.dataset);
+			// must execute before execute this.init_parts()
+			this.setup_options(this.dataset_manager.options_from_dataset());
+			this.chart_pattern = this.dataset_manager.detect_chart_pattern();
 		}
-		this.dataset = this.dataset_manager.setup(this.dataset);
-		// must execute before execute this.init_parts()
-		this.setup_options(this.dataset_manager.options_from_dataset());
-		this.chart_pattern = this.dataset_manager.detect_chart_pattern();
 		
 		if(this.svg===undefined){
 			this.svg = d3.select("#"+this.div_id)
 				.append("svg")
 				.attr("id","svg_"+this.div_id)
 				.attr("class","ccd3")
-				.attr("width",this.width)
-				.attr("height",this.height)
 				.attr("overflow","hidden") // for IE
 				;
 		}
+		this.svg
+			.attr("width",this.width)
+			.attr("height",this.height)
+			;
+
 		this.inner_width = this.width;
 		this.inner_height = this.height;
 		
 		this.init_parts();
 		
 		this.title.render();
-		this.title.arrange(this.width/2,this.title.height/2);
+		this.title.arrange(this.width/2,this.title.margin_top);
 		
 		if(this.chart_pattern === "xy"){
 			this.xLabel.render();
 			this.yLabel.render();
-			this.xLabel.arrange(this.width/2,this.height - this.xLabel.height/2);
-			this.yLabel.arrange(this.yLabel.width/2,this.height/2);
+			this.xLabel.arrange(this.width/2,this.height - this.xLabel.text_height - this.xLabel.margin_bottom);
+			this.yLabel.arrange(this.yLabel.margin_left,this.height/2);
 			
 			// calc_min_step return undefined if series has only one data.
 			this.xAxis.scale_type = this.dataset_manager.detect_scale_type(function(d){return d.x;});
@@ -405,6 +446,37 @@ var ccd3 = function(){
 		return this.color_palette[i%this.color_palette.length];
 	};
 	
+	ccd3.Chart.prototype.to_csv = function(dataset){
+		if(dataset === undefined){ dataset = this.dataset; }
+		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
+		
+		for(i=0;i<dataset.length;i++){
+			for(j=0;j<dataset[i].values.length;j++){
+				row = [dataset[i].name];
+				d = dataset[i].values[j];
+				if(d.x!==undefined){ row.push(d.x); }else{ row.push(""); }
+				if(d.y!==undefined){ row.push(d.y); }else{ row.push(""); }
+				if(d.z!==undefined){ row.push(d.z); }else{ row.push(""); }
+				ar.push(row);
+			}
+		}
+		for(i=0;i<ar.length;i++){
+			csv += '"' + ar[i].join('","') + '"\n';
+		}
+		return csv;
+	};
+	
+	ccd3.Chart.prototype.download_as_csv = function(file_contents,file_name){
+		if(file_name===undefined){ file_name = "data.csv"; }
+		
+		var f = d3.select("body").append("form").attr("method","POST").attr("action",ccd3.options.csv_echo_path());
+		f.append("input").attr("name","file_name").attr("value",file_name).attr("type","hidden");
+		f.append("input").attr("name","file_contents").attr("value",file_contents).attr("type","hidden");
+		f[0][0].submit();
+		f.remove();
+		
+	};
+
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts                                                        */
 	/* ------------------------------------------------------------------ */
@@ -500,11 +572,11 @@ var ccd3 = function(){
 			text: null,
 			text_anchor: "middle",
 			rotate: 0,
-			font_size: 18,
-			margin_top: 5,
-			margin_bottom: 5,
-			margin_right: 5,
-			margin_left: 5,
+			font_size: 10,
+			margin_top: 3,
+			margin_bottom: 3,
+			margin_right: 3,
+			margin_left: 3,
 			text_height: 0,
 			text_width: 0,
 			height: 0,
@@ -522,7 +594,7 @@ var ccd3 = function(){
 		this.svg.select("text")
 			.text(this.text)
 			.attr("font-size",this.font_size)
-			.attr("transform","rotate("+this.rotate+")");
+			.attr("transform","translate(0,"+this.font_size+") rotate("+this.rotate+")");
 		
 		this.text_height = this.svg[0][0].getBBox().height;
 		this.text_width = this.svg[0][0].getBBox().width;
@@ -539,7 +611,8 @@ var ccd3 = function(){
 	ccd3.Parts.Label.Title.prototype.get_defaults = function(){
 		return {
 			class_name: "ccd3_title",
-			font_size: 18
+			font_size: 18,
+			margin_bottom: 5
 		};
 	};
 	
@@ -552,8 +625,8 @@ var ccd3 = function(){
 	ccd3.Parts.Label.xLabel.prototype.get_defaults = function(){
 		return {
 			class_name: "ccd3_xLabel",
-			font_size: 10,
-			margin_top: 20
+			margin_bottom: 10,
+			font_size: 10
 		};
 	};
 	
@@ -566,8 +639,8 @@ var ccd3 = function(){
 	ccd3.Parts.Label.yLabel.prototype.get_defaults = function(){
 		return {
 			class_name: "ccd3_yLabel",
+			margin_left: 10,
 			font_size: 10,
-			margin_right: 20,
 			rotate: 90
 		};
 	};
@@ -582,8 +655,8 @@ var ccd3 = function(){
 		return {
 			show: true,
 			font_size: 10,
-			margin_top: 5,
-			margin_bottom: 3,
+			margin_top: 0,
+			margin_bottom: 0,
 			margin_left: 5,
 			margin_right: 5,
 			legend_height: 0,
@@ -759,7 +832,7 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(){
 		return {
 			menus: [ 
-				{label:"CSV Download", func:function(){ ccd3.Util.download_as_csv(ccd3.Util.csv_from_dataset(this.dataset)); } },
+				{label:"CSV Download", func:function(){ this.download_as_csv(this.to_csv()); } },
 				{label:"close", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
@@ -770,38 +843,42 @@ var ccd3 = function(){
 			icon_right: 5,
 			item_x_margin: 10,
 			item_y_margin: 5,
+			item_interval: 35,
+			item_opacity: 0.8
 		};
 	};
 	ccd3.Parts.Menu.prototype.add_menu = function(obj){
 		this.menus.splice(this.menus.length-1,0,obj);
 	};
 	ccd3.Parts.Menu.prototype.render = function(){
-		if(this.svg !== undefined){ return; }
 		var that = this;
 		
-		// render menu icon(triple line)
-		this.svg = this.chart.svg.append("g").attr("class","ccd3_menu");
-		this.svg_icon = this.svg.append("g").attr("class","ccd3_menu_icon");
-		this.svg_list = this.svg.append("g").attr("class","ccd3_menu_list");
+		if(this.svg===undefined){
+			// render menu icon(triple line)
+			this.svg = this.chart.svg.append("g").attr("class","ccd3_menu");
+			this.svg_icon = this.svg.append("g").attr("class","ccd3_menu_icon");
+			this.svg_list = this.svg.append("g").attr("class","ccd3_menu_list");
 		
-		this.svg_icon.append("rect").attr("class","ccd3_menu_rect")
-			.attr("width",this.icon_width).attr("height",this.icon_height).attr("fill","white");
-		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",1);
-		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",6);
-		this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",11);
-		this.svg_icon.selectAll(".ccd3_menu_bar")
-			.attr("width",20).attr("height",2).attr("rx",2).attr("ry",2)
-			.attr("x",2)
-			.attr("fill","gray");
+			this.svg_icon.append("rect").attr("class","ccd3_menu_rect")
+				.attr("width",this.icon_width).attr("height",this.icon_height).attr("fill","white").attr("opacity",0);
+			this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",1);
+			this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",6);
+			this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",11);
+			this.svg_icon.selectAll(".ccd3_menu_bar")
+				.attr("width",20).attr("height",2).attr("rx",2).attr("ry",2)
+				.attr("x",2)
+				.attr("fill","gray");
+			
+			this.svg_icon.on("click",function(e){
+				if(that.opened){
+					that.toggle_menu();
+				}else{
+					that.toggle_menu();
+				}
+			});
+		}
 		this.arrange(this.chart.width-this.icon_width-this.icon_right,this.icon_top);
 		
-		this.svg_icon.on("click",function(e){
-			if(that.opened){
-				that.toggle_menu();
-			}else{
-				that.toggle_menu();
-			}
-		});
 	};
 	ccd3.Parts.Menu.prototype.toggle_menu = function(){
 		var that = this;
@@ -810,12 +887,12 @@ var ccd3 = function(){
 		
 		var closed_xy = function(d,i){
 			var x = that.icon_width + 20;
-			var y = that.icon_top + that.icon_height + that.font_size + i*30 + 10;
+			var y = that.icon_top + that.icon_height + that.font_size + i*that.item_interval + 15;
 			return "translate("+x+","+y+")";
 		};
 		var opened_xy = function(d,i){
 			var x = -1 * this.getBBox().width + that.icon_width + that.item_x_margin + 40;
-			var y = that.icon_top + that.icon_height + that.font_size + i*30 + 10;
+			var y = that.icon_top + that.icon_height + that.font_size + i*that.item_interval + 15;
 			return "translate("+x+","+y+")";
 		};
 		
@@ -827,11 +904,11 @@ var ccd3 = function(){
 			.attr("class","ccd3_menu_item")
 			.attr("cursor","pointer")
 			.call(function(e){
-				e.append("rect").attr("fill","white").attr("stroke","gray")
+				e.append("rect").attr("fill","white").attr("stroke","gray").attr("opacity",that.item_opacity)
 					.attr("rx",8).attr("ry",8);
 			})
 			.call(function(e){
-				e.append("text").text(function(d){ return d.label; }).attr("font-size",this.font_size);
+				e.append("text").text(function(d){ return d.label; }).attr("font-size",that.font_size);
 			})
 			.on("mouseover",function(e){
 				d3.select(this).select("rect").attr("fill","lightyellow");
@@ -2834,44 +2911,6 @@ var ccd3 = function(){
 		}
 		
 		return dataset;
-	};
-	ccd3.Util.csv_from_dataset = function(dataset){
-		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
-		
-		for(i=0;i<dataset.length;i++){
-			for(j=0;j<dataset[i].values.length;j++){
-				row = [dataset[i].name];
-				d = dataset[i].values[j];
-				if(d.x!==undefined){ row.push(d.x); }else{ row.push(""); }
-				if(d.y!==undefined){ row.push(d.y); }else{ row.push(""); }
-				if(d.z!==undefined){ row.push(d.z); }else{ row.push(""); }
-				ar.push(row);
-			}
-		}
-		for(i=0;i<ar.length;i++){
-			csv += '"' + ar[i].join('","') + '"\n';
-		}
-		return csv;
-	};
-	ccd3.Util.download_as_csv = function(file_contents,file_name){
-		if(file_name===undefined){ file_name = "data.csv"; }
-		
-		var form = document.createElement("form");
-		document.body.appendChild(form);
-		var input = document.createElement("input");
-		input.setAttribute("type","hidden");
-		input.setAttribute("name","file_name");
-		input.setAttribute("value",file_name);
-		form.appendChild(input);
-		var input2 = document.createElement("input");
-		input2.setAttribute("type","hidden");
-		input2.setAttribute("name","file_contents");
-		input2.setAttribute("value",file_contents);
-		form.appendChild(input2);
-		form.setAttribute("action","./../server/echo_csv.php"); // TODO configurable
-		form.setAttribute("method","POST");
-		form.submit();
-		document.body.removeChild(form);
 	};
 	
 	return ccd3;

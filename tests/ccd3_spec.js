@@ -183,6 +183,31 @@ describe("Radar charts", function(){
 	});
 });
 
+describe("Labels", function(){
+	var cond = {
+		series_cnt:6,
+		values_cnt:10,
+		x:ccd3t.sequence_str,
+		y:ccd3t.random_int 
+	};
+	var options = {
+		width:360,height:360,
+		default_series_type: "line"
+	};
+	it("don't throw.",function(){
+		create_section("Label Tests");
+		expect(function(){
+			render_test( cond, options);
+			options.title = { text:"Title Test" };
+			render_test( cond, options);
+			options.xLabel = { text:"xLabel Test" };
+			options.yLabel = { text:"yLabel Test" };
+			render_test( cond, options);
+			}).not.toThrow();
+	});
+});
+
+
 describe("When updating dataset, ", function(){
 	var cond,chart,generator;
 	var options = {

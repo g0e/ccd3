@@ -17,15 +17,19 @@
 		<script type="text/javascript">
 <!--
 window.onload = function(){
+	ccd3.options.echo_script = "server/echo_csv.rb";
 	(function(){
 		var div_id = "chart1";
 		/* prepare dataset */
 
 		var cond = {
-			series_cnt:2,
-			values_cnt:10,
+			series_cnt:3,
+			values_cnt:25,
 			x: ccd3t.sequence_str,
+			//x: ccd3t.matrix_x_str,
 			y: ccd3t.random_int
+			//y: ccd3t.matrix_y_str,
+			//z: ccd3t.random_int,
 		};
 		var data = (new ccd3t.DatasetGenerator(cond)).generate();
 		ccd3.Util.swap_dataset_xy(data);
@@ -43,8 +47,8 @@ window.onload = function(){
 		c.menu.show = true;
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
-		//c.title.text = "Sample Chart1";
-		c.default_series_type = "bar";
+		c.title.text = "Sample Chart1j";
+		c.default_series_type = "stackedbar";
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
 		//c.yAxis.domain_min = 0;
@@ -54,9 +58,11 @@ window.onload = function(){
 		//c.legend.show = false;
 		//c.tooltip.show = false;
 		//c.scale.domain = {y_min:0, y_margin_rate: 0.0};
+		c.menu.show = true;
 		
 		c.height = 480;
 		c.width = 480;
+		c.auto_resize = true;
 		c.xLabel.text = "hogeeeee";
 		c.yLabel.text = "piyopiyo";
 		//c.zoomable = false;
@@ -84,9 +90,11 @@ window.onload = function(){
 			<li><a href="./axis_format.html">axis format examples</a></li>
 			<li><a href="./form_ajax.html">form ajax examples</a></li>
 			<li><a href="./black_background.html">black background example</a></li>
+			<li><a href="./resize.html">resize example</a></li>
 		</ul>
 		<div id="charts">
-			<div id="chart1"></div>
+			<div id="chart1" style="width:100%;height:100%;">
+			</div>
 		</div>
 	</body>
 </html>

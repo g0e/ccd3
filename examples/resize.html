@@ -1,0 +1,97 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=8;IE=9"/>
+		<title>Test ccd3</title>
+		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
+		<script type="text/javascript" src="./../ccd3.js"></script>
+		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript">
+<!--
+window.onload = function(){
+	(function(){
+		var div_id = "chart1";
+		var cond = {
+			series_cnt:3,
+			values_cnt:25,
+			x: ccd3t.sequence_str,
+			y: ccd3t.random_int
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = ".auto_resize = true";
+		c.auto_resize = true;
+		c.default_series_type = "stackedbar";
+		c.menu.show = true;
+		c.xLabel.text = "hogeeeee";
+		c.yLabel.text = "piyopiyo";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart2";
+		var cond = {
+			series_cnt:3,
+			values_cnt:5,
+			x: ccd3t.sequence_int,
+			y: ccd3t.random_int
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = ".auto_resize = true";
+		c.auto_resize = true;
+		c.default_series_type = "radar";
+		c.render();
+	})();
+	
+	(function(){
+		var div_id = "chart3";
+		var cond = {
+			series_cnt:1,
+			values_cnt:25,
+			x: ccd3t.matrix_x_str,
+			y: ccd3t.matrix_y_str,
+			z: ccd3t.random_int
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = "default(.auto_resize = false)";
+		c.default_series_type = "heatmap";
+		c.height = 300;
+		c.width = 300;
+		c.xLabel.text = "hogeeeee";
+		c.yLabel.text = "piyopiyo";
+		c.render();
+	})();
+
+	(function(){
+		var div_id = "chart4";
+		var cond = {
+			series_cnt:1,
+			values_cnt:10,
+			x: ccd3t.sequence_str,
+			y: ccd3t.random_int
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = "default(.auto_resize = false)";
+		c.default_series_type = "line";
+		c.render();
+	})();
+
+};
+
+-->
+		</script>
+	</head>
+	<body>
+		<div id="charts">
+			<div style="width:50%;height:50%;float:left;" id="chart1"></div>
+			<div style="width:50%;height:50%;float:left;" id="chart2"></div>
+			<div style="clear:both;"></div>
+			<div style="float:left;" id="chart3"></div>
+			<div style="float:left;" id="chart4"></div>
+		</div>
+	</body>
+</html>
