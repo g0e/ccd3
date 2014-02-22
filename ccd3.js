@@ -863,7 +863,7 @@ var ccd3 = function(){
 			that.div
 				.html(that.chart.series[series_num].tooltip_html(d))
 				.style("display",null)
-				.transition().duration(300)
+				//.transition().duration(300)
 				.style("opacity", 0.8)
 				;
 		});
@@ -1648,7 +1648,7 @@ var ccd3 = function(){
 		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
 		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
 		var html = "";
-		html += "<b>" + this.series.name + "</b>";
+		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
 		html += "<br>x: " + xFormat(d.x);
 		html += "<br>y: " + yFormat(d.y);
 		return html;
@@ -2291,7 +2291,7 @@ var ccd3 = function(){
 		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
 		var zFormat = this.chart.tooltip.zFormat || this.zFormat;
 		var html = "";
-		html += "<b>" + this.series.name + "</b>";
+		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
 		html += "<br>x: " + xFormat(d.x);
 		html += "<br>y: " + yFormat(d.y);
 		html += "<br>z: " + zFormat(d.z);
@@ -2681,7 +2681,7 @@ var ccd3 = function(){
 		var aFormat = this.chart.tooltip.aFormat || this.chart.aAxis.format;
 		var rFormat = this.chart.tooltip.rFormat || this.chart.rAxis.format;
 		var html = "";
-		html += "<b>" + this.series.name + "</b>";
+		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
 		html += "<br>x: " + aFormat(d.x);
 		html += "<br>y: " + rFormat(d.y);
 		return html;
