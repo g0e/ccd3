@@ -713,8 +713,8 @@ var ccd3 = function(){
 		return {
 			show: true,
 			font_size: 10,
-			margin_top: 3,
-			margin_bottom: 3,
+			margin_top: 1,
+			margin_bottom: 1,
 			margin_left: 5,
 			margin_right: 5,
 			legend_height: 0,
@@ -1558,7 +1558,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e
 				.select("rect")
-				.attr("width",function(){ return this.nextSibling.getBBox().width + 10 })
+				.attr("width",function(){ return this.nextSibling.getBBox().width + 10; })
 				;
 			})
 			;
