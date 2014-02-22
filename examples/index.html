@@ -23,13 +23,14 @@ window.onload = function(){
 		/* prepare dataset */
 
 		var cond = {
-			series_cnt:1,
-			values_cnt:20,
-			x: ccd3t.sequence_str,
+			series_cnt:3,
+			values_cnt:50,
+			x: ccd3t.sequence_int,
 			//x: ccd3t.matrix_x_str,
-			y: ccd3t.random_int
+			//y: ccd3t.random_int,
+			y: ccd3t.random_walk_int,
 			//y: ccd3t.matrix_y_str,
-			//z: ccd3t.random_int,
+			//z: ccd3t.random_int
 		};
 		var data = (new ccd3t.DatasetGenerator(cond)).generate();
 		//ccd3.Util.swap_dataset_xy(data);
@@ -47,7 +48,7 @@ window.onload = function(){
 		c.menu.show = true;
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
-		c.title.text = "Sample Chart1j";
+		c.title.text = "Sample Chart1";
 		c.default_series_type = "stackedbar";
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
@@ -58,11 +59,10 @@ window.onload = function(){
 		//c.legend.show = false;
 		//c.tooltip.show = false;
 		//c.scale.domain = {y_min:0, y_margin_rate: 0.0};
-		c.menu.show = true;
 		
 		c.height = 480;
-		c.width = 480;
-		c.auto_resize = true;
+		c.width = 600;
+		//c.auto_resize = true;
 		c.xLabel.text = "hogeeeee";
 		c.yLabel.text = "piyopiyo";
 		//c.zoomable = false;

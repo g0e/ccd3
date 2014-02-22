@@ -128,7 +128,7 @@ var ccd3 = function(){
 			var that = this;
 			d3.select(window).on("resize."+this.div_id,function(){
 				that.resize();
-				that.render({dont_recalc_dataset:true});
+				that.render({ dont_recalc_dataset:true, dont_reset_domain:true });
 			});
 		}
 		
@@ -137,9 +137,12 @@ var ccd3 = function(){
 		}
 		
 		if(!cond.dont_recalc_dataset){
+			this.dataset_manager.build_lookup_table("x");
+			this.dataset_manager.build_lookup_table("y");
 			this.dataset_manager.update_stack_values(this.direction,this.stack_type);
 		}
 		
+		var top_margin,right_margin;
 		if(this.chart_pattern === "xy"){
 			if(!cond.dont_reset_domain){
 				this.xAxis.reset_domain();
@@ -150,10 +153,10 @@ var ccd3 = function(){
 			this.xAxis.render();
 			this.yAxis.render();
 			
-			var right_margin = 10;
+			right_margin = 10;
 			this.inner_width = this.width - this.yLabel.sizeof("width") - this.yAxis.sizeof("label_width") - right_margin;
 			
-			var top_margin = 20;
+			top_margin = 23;
 			if(this.title.sizeof("height") < top_margin){
 				this.title.height = top_margin;
 			}
@@ -196,6 +199,11 @@ var ccd3 = function(){
 			this.xAxis.render();
 		
 		}else if(this.chart_pattern === "ra"){
+			top_margin = 23;
+			if(this.title.sizeof("height") < top_margin){
+				this.title.height = top_margin;
+			}
+			
 			var legend_width = Math.min(this.height,this.width);
 			this.legend.render(legend_width);
 			
@@ -241,25 +249,18 @@ var ccd3 = function(){
 			);
 		}
 		
-		/*
-		this.menu.add_menu({
-			key: "test",
-			label: "test",
-			func: function(){
-				var cur_domain = this.xAxis.scale.domain();
-				var new_domain = [];
-				for(var i=0;i<cur_domain.length;i++){
-					new_domain.unshift(cur_domain[i]);
-				}
-				this.xAxis.scale.domain(new_domain);
-				//this.initialized = false;
-				this.render({dont_reset_domain:true});
-			}
-		},"test");
-		*/
-		
 		this.render_series();
 		this.menu.render();
+	};
+	
+	ccd3.Chart.prototype.sort_domain = function(sort_axis, cond_axis, asc){
+		var domain = this[sort_axis+"Axis"].scale.domain();
+		var weights = this.dataset_manager.get_axis_sum(sort_axis, cond_axis);
+		domain.sort(function(a,b){
+			return (weights[b] - weights[a]) * ((asc)? -1:1);
+		});
+		this[sort_axis+"Axis"].scale.domain(domain);
+		this.render({dont_reset_domain:true});
 	};
 	
 	ccd3.Chart.prototype.init = function(cond){
@@ -324,10 +325,50 @@ var ccd3 = function(){
 			
 			this.xAxis.init_scale();
 			this.yAxis.init_scale();
+
+			var z_scale_type = this.dataset_manager.detect_scale_type(function(d){return d.z;});
+			if(this.xAxis.scale_type == "ordinal"){
+				if(this.yAxis.scale_type === "linear"){
+					this.menu.add_menu({
+						func: function(data){
+							this.sort_domain("x","y",data.asc);
+							data.asc = !(data.asc);
+						},label: "Sort X By Y"},"sort_x_by_y"
+					);
+				}
+				if(z_scale_type === "linear"){
+					this.menu.add_menu({
+						func: function(data){
+							this.sort_domain("x","z",data.asc);
+							data.asc = !(data.asc);
+						},label: "Sort X By Z"},"sort_x_by_z"
+					);
+				}
+			}
+			if(this.yAxis.scale_type == "ordinal"){
+				if(this.xAxis.scale_type === "linear"){
+					this.menu.add_menu({
+						func: function(data){
+							this.sort_domain("y","x",data.asc);
+							data.asc = !(data.asc);
+						},label: "Sort Y By X"},"sort_y_by_x"
+					);
+				}
+				if(z_scale_type === "linear"){
+					this.menu.add_menu({
+						func: function(data){
+							this.sort_domain("y","z",data.asc);
+							data.asc = !(data.asc);
+						},label: "Sort Y By Z"},"sort_y_by_z"
+					);
+				}
+			}
+			
 		}else if(this.chart_pattern === "ra"){
 			this.rAxis.init_scale();
 			this.aAxis.init_scale();
 		}
+		
 		// switch false if you want to re-render labels
 		this.initialized = true;
 	};
@@ -726,7 +767,7 @@ var ccd3 = function(){
 				.attr("fill",function(d){ return that.chart._color(d); })
 				.attr("y","0.2em")
 				.attr("x","0.0em")
-				.attr("font-size",this.font_size)
+				.attr("font-size",that.font_size)
 				;
 			})
 			.call(function(s){
@@ -735,7 +776,7 @@ var ccd3 = function(){
 				.text(function(d,i){ return dataset[i].name; })
 				.attr("y","0.8em")
 				.attr("x","0.8em")
-				.attr("font-size",this.font_size)
+				.attr("font-size",that.font_size)
 				;
 			})
 			;
@@ -772,9 +813,10 @@ var ccd3 = function(){
 		dataset[series_num].visible = !dataset[series_num].visible;
 		
 		// reset zoomed
-		this.chart.svg.selectAll(".ccd3_brush_reset_button").remove();
+		this.chart.svg.selectAll(".ccd3_zoom_reset_button").remove();
 		this.chart.zoomed = false;
 		
+		//this.chart.render({ dont_reset_domain:true  });
 		this.chart.render();
 	};
 	
@@ -850,7 +892,13 @@ var ccd3 = function(){
 		return {
 			menus: [ 
 				{ key:"csv", label:"CSV Download", func:function(){ this.download_as_csv(this.to_csv()); } },
-				{ key:"close", label:"close", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"reset", label:"Reset Chart", func:function(){
+					for(var i=0,len=this.dataset.length;i<len;i++){
+						this.dataset[i].visible = true;
+					}
+					this.render(); 
+				}},
+				{ key:"close", label:"Close Menu", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
@@ -860,14 +908,15 @@ var ccd3 = function(){
 			icon_right: 5,
 			item_x_margin: 10,
 			item_y_margin: 5,
-			item_interval: 35,
+			item_interval: 32,
 			item_opacity: 0.8
 		};
 	};
 	ccd3.Parts.Menu.prototype.add_menu = function(obj,key){
 		if(!(key)){
-			this.menus.splice(this.menus.length-1,0,obj);
+			this.menus.splice(this.menus.length-2,0,obj);
 		}else{
+			obj.key = key;
 			for(var i=0;i<this.menus.length;i++){
 				if(this.menus[i].key == key){
 					this.menus[i] = obj;
@@ -944,7 +993,8 @@ var ccd3 = function(){
 				d3.select(this).select("rect").attr("fill","white");
 			})
 			.on("click",function(e){
-				d3.select(this).datum().func.call(that.chart);
+				var menu_data = d3.select(this).datum();
+				menu_data.func.call(that.chart,menu_data);
 			})
 			.attr("transform",closed_xy)
 			;
@@ -1254,7 +1304,7 @@ var ccd3 = function(){
 		var that = this;
 		
 		this.init_scale();
-		this.reset_domain();
+		//this.reset_domain();
 		
 		if(!this.svg){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_rAxis");
@@ -1275,7 +1325,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e.append("text")
 				.attr("text-anchor","middle")
-				.attr("font-size",this.font_size)
+				.attr("font-size",that.font_size)
 				;
 			})
 			;
@@ -1337,7 +1387,7 @@ var ccd3 = function(){
 		var that = this;
 		
 		this.init_scale();
-		this.reset_domain();
+		//this.reset_domain();
 		
 		if(!this.svg){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_aAxis");
@@ -1359,7 +1409,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e.append("text")
 				.attr("text-anchor","middle")
-				.attr("font-size",this.font_size)
+				.attr("font-size",that.font_size)
 				;
 			})
 			;
@@ -1428,7 +1478,8 @@ var ccd3 = function(){
 	ccd3.Parts.Zoom.prototype = new ccd3.Parts();
 	ccd3.Parts.Zoom.prototype.get_defaults = function(){
 		return {
-			use: true
+			use: true,
+			font_size: 12
 		};
 	};
 	ccd3.Parts.Zoom.prototype.render = function(){
@@ -1446,6 +1497,10 @@ var ccd3 = function(){
 		this.svg = this.chart.series_container.svg
 			.append("g")
 			.attr("class","ccd3_brush")
+			.attr("fill","gray")
+			.attr("opacity",0.3)
+			.attr("stroke","gray",3)
+			.attr("stroke-width",2)
 			.call(this.brush)
 			;
 	};
@@ -1466,31 +1521,45 @@ var ccd3 = function(){
 		
 		this.brush.clear();
 		c.svg.selectAll(".ccd3_brush").call(this.brush);
-		c.series_container.svg
+		var button = c.series_container.svg
 			.append("g")
+			.attr("class","ccd3_zoom_reset_button")
 			.attr("cursor","pointer")
-			.attr("transform","translate(" + (this.chart.inner_width) + ",0)")
-			.attr("class","ccd3_brush_reset_button")
 			.call(function(e){
 				e
 				.append("rect")
 				.attr("height","1.6em")
-				.attr("width","7em")
-				.attr("y","0.3em")
-				.attr("x","-7.25em")
+				.attr("font-size",that.font_size)
+				.attr("fill","lightgray")
+				.attr("opacity",0.7)
+				.attr("stroke","none")
 				.attr("rx",5).attr("ry",5)
+				.attr("x",-5)
 				;
 			})
 			.call(function(e){
 				e
 				.append("text")
 				.text("clear zoom")
-				.attr("y","1.5em")
-				.attr("x","-6.5em")
+				.attr("fill","#333333")
+				.attr("text-anchor","left")
+				.attr("font-size",that.font_size)
+				.attr("y","1.2em")
 				;
 			})
 			.on("click",function(){
 				that.reset_zoom();
+			})
+			;
+		button
+			.attr("transform",function(){
+				return "translate(" + (that.chart.inner_width - this.getBBox().width - 10) + ",5)";
+			})
+			.call(function(e){
+				e
+				.select("rect")
+				.attr("width",function(){ return this.nextSibling.getBBox().width + 10 })
+				;
 			})
 			;
 	};
@@ -1498,7 +1567,7 @@ var ccd3 = function(){
 		var c = this.chart;
 		c.zoomed = false;
 		c.render();
-		c.series_container.svg.selectAll(".ccd3_brush_reset_button").remove();
+		c.series_container.svg.selectAll(".ccd3_zoom_reset_button").remove();
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -1575,6 +1644,7 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.prototype.highlight = function(){};
 	ccd3.Parts.Series.prototype.tooltip_html = function(d){
+		//console.log(this.chart.dataset_manager.lookup("x",d.x));
 		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
 		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
 		var html = "";
@@ -2372,8 +2442,8 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.Pie.prototype.render = function(){
 		var that = this;
-		var radius = Math.min(this.chart.inner_height,this.chart.inner_width)/2;
-		var arc = d3.svg.arc().outerRadius(radius*this.radius_nofocus).innerRadius(radius*this.inner_radius);
+		this.radius = Math.min(this.chart.inner_height,this.chart.inner_width)/2;
+		var arc = d3.svg.arc().outerRadius(this.radius*this.radius_nofocus).innerRadius(this.radius*this.inner_radius);
 		
 		if(this.yFormat===undefined){
 			this.yFormat = ccd3.Util.default_numeric_format;
@@ -2401,7 +2471,7 @@ var ccd3 = function(){
 					.style("opacity",1)
 					.select("path")
 					.attr("d",function(d,i){
-						arc.outerRadius(radius);
+						arc.outerRadius(that.radius);
 						return arc(d);
 					});
 			})
@@ -2410,7 +2480,7 @@ var ccd3 = function(){
 					.style("opacity",that.opacity)
 					.select("path")
 					.attr("d",function(d,i){
-						arc.outerRadius(radius*that.radius_nofocus);
+						arc.outerRadius(that.radius*that.radius_nofocus);
 						return arc(d);
 					});
 			})
@@ -2477,8 +2547,8 @@ var ccd3 = function(){
 				.style("visibility",function(d){
 					var text_width = this.getBBox().width;
 					var text_height = this.getBBox().height;
-					var arc_width = Math.abs(Math.cos(d.startAngle) - Math.cos(d.endAngle))*radius/2;
-					var arc_height = Math.abs(Math.sin(d.startAngle) - Math.sin(d.endAngle))*radius/2;
+					var arc_width = Math.abs(Math.cos(d.startAngle) - Math.cos(d.endAngle))*that.radius/2;
+					var arc_height = Math.abs(Math.sin(d.startAngle) - Math.sin(d.endAngle))*that.radius/2;
 					if(arc_width>=text_width || arc_height>=text_height){
 						return "visible";
 					}else{
@@ -2752,7 +2822,8 @@ var ccd3 = function(){
 			if(direction === "x"){
 				stack = d3.layout.stack()
 					.offset(stack_type)
-					.values(function(d){ return d.values; });
+					.values(function(d){ return d.values; })
+					;
 				stack(dataset_stackedbar);
 			}
 			if(direction === "y"){
@@ -2766,6 +2837,42 @@ var ccd3 = function(){
 				stack(dataset_stackedbar);
 			}
 		}
+	};
+	ccd3.DatasetManager.prototype.build_lookup_table = function(axis){
+		var dataset = this.dataset;
+		var obj = {},t;
+		for(var i=0;i<dataset.length;i++){
+			if(dataset[i].visible){
+				for(var j=0;j<dataset[i].values.length;j++){
+					t = dataset[i].values[j][axis];
+					if(!(obj.hasOwnProperty(t))){
+						obj[t] = [];
+					}
+					dataset[i].values[j].series_name = dataset[i].name;
+					obj[t].push(dataset[i].values[j]);
+				}
+			}
+		}
+		this["lookup_"+axis] = obj;
+	};
+	ccd3.DatasetManager.prototype.lookup = function(axis,value){
+		var ret = this["lookup_"+axis][value];
+		return (ret)? ret:[];
+	};
+	ccd3.DatasetManager.prototype.get_axis_sum = function(base_axis,sum_axis){
+		var lookup = this["lookup_"+base_axis];
+		var ar,sum,ret = {};
+		for(var key in lookup){
+			if(lookup.hasOwnProperty(key)){
+				sum = 0;
+				ar = lookup[key];
+				for(var i=0;i<ar.length;i++){
+					sum += lookup[key][i][sum_axis];
+				}
+				ret[key] = sum;
+			}
+		}
+		return ret;
 	};
 	ccd3.DatasetManager.prototype.get_max = function(func){
 		return d3.max(this.dataset.map(function(d){ 
