@@ -364,6 +364,17 @@ var ccd3 = function(){
 				}
 			}
 			
+		}else if(this.chart_pattern === "r"){
+			this.menu.add_menu({
+				func: function(data){
+					if(this.series[0].sort === undefined || this.series[0].sort == "asc"){
+						this.series[0].sort = "desc";
+					}else{
+						this.series[0].sort = "asc";
+					}
+					this.render({dont_reset_domain:true});
+				},label: "Sort"},"sort"
+			);
 		}else if(this.chart_pattern === "ra"){
 			this.rAxis.init_scale();
 			this.aAxis.init_scale();
@@ -896,6 +907,9 @@ var ccd3 = function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
+					if(this.dataset[0].series_type === "pie"){
+						this.series[0].sort = undefined;
+					}
 					this.render(); 
 				}},
 				{ key:"close", label:"Close Menu", func:function(){ this.menu.toggle_menu(); }}
@@ -1204,6 +1218,7 @@ var ccd3 = function(){
 			this.axis.ticks(this.tick_num);
 		}
 		this.svg
+			//.transition().duration(500)
 			.call(this.axis)
 			.selectAll(".tick text")
 				.style("text-anchor", "end")
@@ -1266,6 +1281,7 @@ var ccd3 = function(){
 			this.axis.ticks(this.tick_num);
 		}
 		this.svg
+			//.transition().duration(500)
 			.call(this.axis)
 			.selectAll(".tick text")
 				.attr("class","ccd3_y_tick_label")
@@ -2002,6 +2018,7 @@ var ccd3 = function(){
 		// update
 		bars
 			.transition().duration(500)
+			//.delay(function(d, i) { return i * 10; })
 			.attr("transform",xy_func)
 			.style("opacity",that.opacity)
 			.call(function(e){
@@ -2437,6 +2454,7 @@ var ccd3 = function(){
 			radius_nofocus: 0.95,
 			opacity: 0.7,
 			yFormat: undefined,
+			sort: undefined,
 			pFormat: ccd3.Util.default_percent_format
 		};
 	};
@@ -2449,8 +2467,15 @@ var ccd3 = function(){
 			this.yFormat = ccd3.Util.default_numeric_format;
 		}
 		
-		var pie = d3.layout.pie().sort(null)
+		var pie = d3.layout.pie()
 			.value(function(d) { return d.y; });
+		if(this.sort == "desc"){
+			pie.sort(function(a,b){ return b.y - a.y; });
+		}else if(this.sort === "asc"){
+			pie.sort(function(a,b){ return a.y - b.y; });
+		}else{
+			pie.sort(null);
+		}
 		
 		this.svg.attr("transform", function(){
 			return "translate("+(that.chart.inner_width/2)+","+(that.chart.inner_height/2)+")"; 
@@ -2849,6 +2874,7 @@ var ccd3 = function(){
 						obj[t] = [];
 					}
 					dataset[i].values[j].series_name = dataset[i].name;
+					dataset[i].values[j].series_num = i;
 					obj[t].push(dataset[i].values[j]);
 				}
 			}

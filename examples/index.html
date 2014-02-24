@@ -25,7 +25,8 @@ window.onload = function(){
 		var cond = {
 			series_cnt:3,
 			values_cnt:50,
-			x: ccd3t.sequence_int,
+			x: ccd3t.sequence_str,
+			//x: ccd3t.sequence_int,
 			//x: ccd3t.matrix_x_str,
 			//y: ccd3t.random_int,
 			y: ccd3t.random_walk_int,
@@ -62,7 +63,7 @@ window.onload = function(){
 		
 		c.height = 480;
 		c.width = 600;
-		//c.auto_resize = true;
+		c.auto_resize = true;
 		c.xLabel.text = "hogeeeee";
 		c.yLabel.text = "piyopiyo";
 		//c.zoomable = false;

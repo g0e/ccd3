@@ -32,8 +32,9 @@ window.onload = function(){
 			{ series_cnt:1, values_cnt:400, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }
 		)).generate();
 		var c = new ccd3.Chart(div_id,data);
-		c.title.text = "20x20, xy-label, random drop";
+		c.title.text = "20x20, xy-label";
 		c.default_series_type = "heatmap";
+		c.menu.show = true;
 		c.height = 360;
 		c.width = 360;
 		c.render();
