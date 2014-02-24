@@ -29,9 +29,9 @@ window.onload = function(){
 			//x: ccd3t.sequence_int,
 			//x: ccd3t.matrix_x_str,
 			//y: ccd3t.random_int,
-			y: ccd3t.random_walk_int,
+			y: ccd3t.random_float,
 			//y: ccd3t.matrix_y_str,
-			//z: ccd3t.random_int
+			z: ccd3t.random_int
 		};
 		var data = (new ccd3t.DatasetGenerator(cond)).generate();
 		//ccd3.Util.swap_dataset_xy(data);
@@ -47,10 +47,11 @@ window.onload = function(){
 		var c = new ccd3.Chart(div_id,data);
 		//c.show_values = "always";
 		c.menu.show = true;
+		//c.dataset_manager.csv_auto_format = false;
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
 		c.title.text = "Sample Chart1";
-		c.default_series_type = "stackedbar";
+		c.default_series_type = "bubble";
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
 		//c.yAxis.domain_min = 0;

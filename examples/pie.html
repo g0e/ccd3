@@ -13,7 +13,13 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart1-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_weekday({series_num:1});
+		var cond = {
+			series_cnt:1,
+			values_cnt:7,
+			x: ccd3t.sequence_str,
+			y: ccd3t.random_float
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
 		var c = new ccd3.Chart(div_id,data);
 		c.title.text = "title test";
 		c.default_series_type = "pie";
@@ -26,7 +32,13 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart1-2";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_weekday({series_num:1});
+		var cond = {
+			series_cnt:1,
+			values_cnt:7,
+			x: ccd3t.sequence_str,
+			y: ccd3t.random_float
+		};
+		var data = (new ccd3t.DatasetGenerator(cond)).generate();
 		var c = new ccd3.Chart(div_id,data);
 		c.title.text = "title test";
 		c.default_series_type = "pie";

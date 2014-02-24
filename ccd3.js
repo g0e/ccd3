@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.9.4"
+		version: "0.9.5"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -67,7 +67,6 @@ var ccd3 = function(){
 		this.yLabel = {};
 		this.xAxis = {};
 		this.yAxis = {};
-		this.zAxis = {};
 		this.rAxis = {};
 		this.aAxis = {};
 		this.legend = { show:true };
@@ -273,7 +272,7 @@ var ccd3 = function(){
 		
 		if(!cond.dont_recalc_dataset){
 			if(!(this.dataset_manager instanceof ccd3.DatasetManager)){
-				this.dataset_manager = new ccd3.DatasetManager(this);
+				this.dataset_manager = new ccd3.DatasetManager(this, this.dataset_manager);
 			}
 			this.dataset = this.dataset_manager.setup(this.dataset);
 			// must execute before execute this.init_parts()
@@ -515,36 +514,6 @@ var ccd3 = function(){
 		return this.color_palette[i%this.color_palette.length];
 	};
 	
-	ccd3.Chart.prototype.to_csv = function(dataset){
-		if(dataset === undefined){ dataset = this.dataset; }
-		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
-		
-		for(i=0;i<dataset.length;i++){
-			for(j=0;j<dataset[i].values.length;j++){
-				row = [dataset[i].name];
-				d = dataset[i].values[j];
-				if(d.x!==undefined){ row.push(d.x); }else{ row.push(""); }
-				if(d.y!==undefined){ row.push(d.y); }else{ row.push(""); }
-				if(d.z!==undefined){ row.push(d.z); }else{ row.push(""); }
-				ar.push(row);
-			}
-		}
-		for(i=0;i<ar.length;i++){
-			csv += '"' + ar[i].join('","') + '"\n';
-		}
-		return csv;
-	};
-	
-	ccd3.Chart.prototype.download_as_csv = function(file_contents,file_name){
-		if(file_name===undefined){ file_name = "data.csv"; }
-		
-		var f = d3.select("body").append("form").attr("method","POST").attr("action",ccd3.options.csv_echo_path());
-		f.append("input").attr("name","file_name").attr("value",file_name).attr("type","hidden");
-		f.append("input").attr("name","file_contents").attr("value",file_contents).attr("type","hidden");
-		f[0][0].submit();
-		f.remove();
-		
-	};
 
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts                                                        */
@@ -902,7 +871,9 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(){
 		return {
 			menus: [ 
-				{ key:"csv", label:"CSV Download", func:function(){ this.download_as_csv(this.to_csv()); } },
+				{ key:"csv", label:"CSV Download", func:function(){ 
+					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
+				} },
 				{ key:"reset", label:"Reset Chart", func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
@@ -2453,7 +2424,7 @@ var ccd3 = function(){
 			inner_radius: 0.0,
 			radius_nofocus: 0.95,
 			opacity: 0.7,
-			yFormat: undefined,
+			yFormat: ccd3.Util.default_numeric_format,
 			sort: undefined,
 			pFormat: ccd3.Util.default_percent_format
 		};
@@ -2462,10 +2433,6 @@ var ccd3 = function(){
 		var that = this;
 		this.radius = Math.min(this.chart.inner_height,this.chart.inner_width)/2;
 		var arc = d3.svg.arc().outerRadius(this.radius*this.radius_nofocus).innerRadius(this.radius*this.inner_radius);
-		
-		if(this.yFormat===undefined){
-			this.yFormat = ccd3.Util.default_numeric_format;
-		}
 		
 		var pie = d3.layout.pie()
 			.value(function(d) { return d.y; });
@@ -2661,7 +2628,6 @@ var ccd3 = function(){
 		// exit
 		poly.call(this.exit);
 		
-		
 		/* points */
 		// data join
 		var points = this.svg.selectAll(".ccd3_points_g").data(data);
@@ -2716,8 +2682,10 @@ var ccd3 = function(){
 	/*  ccd3.DatasetManager                                               */
 	/* ------------------------------------------------------------------ */
 
-	ccd3.DatasetManager = function(chart){
+	ccd3.DatasetManager = function(chart,options){
 		this.chart = chart;
+		this.csv_auto_format = false;
+		ccd3.Util.merge(this,options);
 	};
 	ccd3.DatasetManager.prototype.setup = function(dataset){
 		var i,len;
@@ -2918,6 +2886,62 @@ var ccd3 = function(){
 			}
 		}));
 	};
+	ccd3.DatasetManager.prototype.to_csv = function(dataset){
+		if(dataset === undefined){ dataset = this.dataset; }
+		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
+		
+		var voidFormat = function(d){ return d; };
+		var xFormat,yFormat,zFormat;
+		if(this.csv_auto_format){
+			xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format || 
+						this.chart.tooltip.aFormat || this.chart.aAxis.format || voidFormat;
+			if(this.dataset[0].series_type === "pie"){
+				yFormat = this.chart.series[0].yFormat;
+			}else{
+				yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format ||
+							this.chart.tooltip.rFormat || this.chart.rAxis.format || voidFormat;
+			}
+			zFormat = this.chart.tooltip.zFormat;
+			if(zFormat === undefined){
+				for(i=0;i<this.chart.series.length;i++){
+					if(this.chart.series[i].zFormat){
+						zFormat = this.chart.series[i].zFormat;
+						break;
+					}
+				}
+				zFormat = voidFormat;
+			}
+		}else{
+			xFormat = voidFormat;
+			yFormat = voidFormat;
+			zFormat = voidFormat;
+		}
+		
+		for(i=0;i<dataset.length;i++){
+			for(j=0;j<dataset[i].values.length;j++){
+				row = [dataset[i].name];
+				d = dataset[i].values[j];
+				if(d.x!==undefined){ row.push(xFormat(d.x)); }else{ row.push(""); }
+				if(d.y!==undefined){ row.push(yFormat(d.y)); }else{ row.push(""); }
+				if(d.z!==undefined){ row.push(zFormat(d.z)); }else{ row.push(""); }
+				ar.push(row);
+			}
+		}
+		for(i=0;i<ar.length;i++){
+			csv += '"' + ar[i].join('","') + '"\n';
+		}
+		return csv;
+	};
+	ccd3.DatasetManager.prototype.download_as_csv = function(file_contents,file_name){
+		if(file_name===undefined){ file_name = "data.csv"; }
+		
+		var f = d3.select("body").append("form").attr("method","POST").attr("action",ccd3.options.csv_echo_path());
+		f.append("input").attr("name","file_name").attr("value",file_name).attr("type","hidden");
+		f.append("input").attr("name","file_contents").attr("value",file_contents).attr("type","hidden");
+		f[0][0].submit();
+		f.remove();
+	};
+
 	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.DatasetLoader                                                */
