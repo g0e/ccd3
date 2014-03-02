@@ -24,12 +24,10 @@ window.onload = function(){
 
 		var cond = {
 			series_cnt:3,
-			values_cnt:30,
-			//x: ccd3t.sequence_str,
-			x: ccd3t.sequence_int,
-			//x: ccd3t.matrix_x_str,
-			y: ccd3t.random_int,
-			//y: ccd3t.random_float,
+			values_cnt:20,
+			x: ccd3t.sequence_str,
+			//y: ccd3t.random_int,
+			y: ccd3t.random_walk_int,
 			//y: ccd3t.matrix_y_str,
 			//z: ccd3t.random_int
 		};
@@ -47,11 +45,13 @@ window.onload = function(){
 		var c = new ccd3.Chart(div_id,data);
 		//c.show_values = "always";
 		c.menu.show = true;
+		//c.zoom.use = false;
+		//c.tooltip.show = false;
 		//c.dataset_manager.csv_auto_format = false;
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
 		c.title.text = "Sample Chart1";
-		c.default_series_type = "stackedbar";
+		c.default_series_type = "line";
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
 		//c.yAxis.domain_min = 0;
@@ -59,7 +59,6 @@ window.onload = function(){
 		//c	.xAxis.domain_min = 0;
 		//c.xAxis.domain_max = 1;
 		//c.legend.show = false;
-		//c.tooltip.show = false;
 		//c.scale.domain = {y_min:0, y_margin_rate: 0.0};
 		
 		c.height = 480;

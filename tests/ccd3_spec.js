@@ -76,14 +76,14 @@ describe("StackedBar charts", function(){
 		expect(function(){
 			render_test({ series_cnt:1, values_cnt:5, x:ccd3t.sequence_int, y:ccd3t.random_int }, options);
 			render_test({ series_cnt:3, values_cnt:5, x:ccd3t.sequence_date, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with int,date,str yAxis.",function(){
 		expect(function(){
 			render_test({ series_cnt:1, values_cnt:5, y:ccd3t.sequence_int, x:ccd3t.random_int }, options);
 			render_test({ series_cnt:3, values_cnt:5, y:ccd3t.sequence_date, x:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, y:ccd3t.sequence_str, x:ccd3t.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, y:ccd3t.sequence_str, x:ccd3t.random_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with stack_type='expand'.",function(){
@@ -106,14 +106,14 @@ describe("Line charts", function(){
 		expect(function(){
 			render_test({ series_cnt:1, values_cnt:30, x:ccd3t.sequence_int, y:ccd3t.random_walk_int }, options);
 			render_test({ series_cnt:3, values_cnt:30, x:ccd3t.sequence_date, y:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, x:ccd3t.sequence_str, y:ccd3t.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_walk_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with int,date,str yAxis.",function(){
 		expect(function(){
 			render_test({ series_cnt:1, values_cnt:30, y:ccd3t.sequence_int, x:ccd3t.random_walk_int }, options);
 			render_test({ series_cnt:3, values_cnt:30, y:ccd3t.sequence_date, x:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, y:ccd3t.sequence_str, x:ccd3t.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, y:ccd3t.sequence_str, x:ccd3t.random_walk_int }, options);
 			}).not.toThrow();
 	});
 });

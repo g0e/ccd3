@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.9.5"
+		version: "0.9.6"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -35,6 +35,11 @@ var ccd3 = function(){
 			return ccd3.instances[d3.select(t.farthestViewportElement).attr("id").replace(/^svg_/g,"")];
 		}
 	};
+	
+	ccd3.env = {};
+	ccd3.env.isIE = (function(){
+		return (window.navigator.userAgent.toLowerCase().indexOf('msie') != -1)? true:false;
+	})();
 	
 	ccd3.options = {};
 	ccd3.options.echo_script = "server/echo_csv.php"; // use .php or .py or .rb
@@ -71,8 +76,9 @@ var ccd3 = function(){
 		this.aAxis = {};
 		this.legend = { show:true };
 		this.tooltip = { show:true };
-		this.menu = { show:false };
+		this.menu = { show:true };
 		this.zoom = { use:true };
+		this.event_layer = {};
 		this.series = [];
 		this.series_options = {};
 		for (var key in ccd3.Parts.Series.type_info()) {
@@ -185,7 +191,11 @@ var ccd3 = function(){
 				this.title.sizeof("height") + this.legend.sizeof("height")
 			);
 			
-			// must call after series_container setup
+			// must call after SeriesContainer setup
+			this.event_layer = new ccd3.Parts.EventLayer(this,this.event_layer);
+			this.event_layer.render();
+			
+			// must call after EventLayer setup
 			if(!(this.zoom instanceof ccd3.Parts)){
 				if(this.zoom.use && !(this.xAxis.scale_type === "ordinal" || this.yAxis.scale_type === "ordinal")){
 					this.zoom = new ccd3.Parts.Zoom(this,this.zoom);
@@ -248,8 +258,20 @@ var ccd3 = function(){
 			);
 		}
 		
+		// must call after Axis,EventLayer setup
+		if(!(this.tooltip instanceof ccd3.Parts)){
+			if(this.tooltip.show){
+				this.tooltip = new ccd3.Parts.Tooltip(this,this.tooltip);
+			}else{
+				this.tooltip.add_listener = function(){};
+			}
+		}
 		this.render_series();
 		this.menu.render();
+		
+		if(this.zoom instanceof ccd3.Parts && this.zoomed){
+			this.zoom.rearrange_reset_button();
+		}
 	};
 	
 	ccd3.Chart.prototype.sort_domain = function(sort_axis, cond_axis, asc){
@@ -326,7 +348,8 @@ var ccd3 = function(){
 			this.yAxis.init_scale();
 
 			var z_scale_type = this.dataset_manager.detect_scale_type(function(d){return d.z;});
-			if(this.xAxis.scale_type == "ordinal"){
+			var series_sortable = this.dataset_manager.has_single_series_type("bar") || this.dataset_manager.has_single_series_type("stackedbar") || this.dataset_manager.has_single_series_type("heatmap");
+			if(this.xAxis.scale_type == "ordinal" && series_sortable){
 				if(this.yAxis.scale_type === "linear"){
 					this.menu.add_menu({
 						func: function(data){
@@ -344,7 +367,7 @@ var ccd3 = function(){
 					);
 				}
 			}
-			if(this.yAxis.scale_type == "ordinal"){
+			if(this.yAxis.scale_type == "ordinal" && series_sortable){
 				if(this.xAxis.scale_type === "linear"){
 					this.menu.add_menu({
 						func: function(data){
@@ -386,14 +409,6 @@ var ccd3 = function(){
 	ccd3.Chart.prototype.init_parts = function(){
 		if(!(this.series_container instanceof ccd3.Parts)){
 			this.series_container = new ccd3.Parts.SeriesContainer(this,this.series_container);
-		}
-		
-		if(!(this.tooltip instanceof ccd3.Parts)){
-			if(this.tooltip.show){
-				this.tooltip = new ccd3.Parts.Tooltip(this,this.tooltip);
-			}else{
-				this.tooltip.add_listener = function(){};
-			}
 		}
 		
 		if(!(this.title instanceof ccd3.Parts)){
@@ -522,7 +537,12 @@ var ccd3 = function(){
 	ccd3.Parts = function(chart,options){
 		this.init(chart,options);
 	};
-	ccd3.Parts.prototype.get_defaults = function(){ return {}; };
+	ccd3.Parts.prototype.get_defaults = function(){
+		return {
+			arrange_x: null,
+			arrange_y: null
+		}; 
+	};
 	ccd3.Parts.prototype.init = function(chart,options){
 		var prop;
 		var defaults = this.get_defaults();
@@ -551,6 +571,8 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.prototype.arrange = function(x,y){
 		if(this.svg){
+			this.arrange_x = x;
+			this.arrange_y = y;
 			this.svg.attr("transform", "translate(" + x + "," + y + ")");
 		}
 	};
@@ -734,11 +756,11 @@ var ccd3 = function(){
 			})
 			.on("mouseover",function(){
 				var series_num = d3.select(this).data();
-				that.chart.series[series_num].highlight(true);
+				that.chart.series[series_num].highlight_series(true);
 			})
 			.on("mouseout",function(){
 				var series_num = d3.select(this).data();
-				that.chart.series[series_num].highlight(false);
+				that.chart.series[series_num].highlight_series(false);
 			})
 			.call(function(s){
 				s.append("rect")
@@ -812,17 +834,22 @@ var ccd3 = function(){
 	ccd3.Parts.Tooltip.prototype.get_defaults = function(){
 		return {
 			show: true,
+			axis_scan: true,
+			show_scan_line: true,
+			scan_line_width: 3,
 			font_size: 10,
 			xFormat: undefined,
 			yFormat: undefined,
-			zFormat: undefined,
-			rFormat: undefined,
-			aFormat: undefined
+			zFormat: undefined
 		};
 	};
 	ccd3.Parts.Tooltip.prototype.render = function(){
 		if(this.div!==undefined) return;
 		var that = this;
+		
+		// initialize format	
+		this.xFormat = this.xFormat || this.chart.xAxis.format || this.chart.aAxis.format;
+		this.yFormat = this.yFormat || this.chart.yAxis.format || this.chart.rAxis.format;
 		
 		//this.tooltip.div = d3.select("#"+this.div_id)
 		this.div = d3.select("body")
@@ -835,9 +862,22 @@ var ccd3 = function(){
 		if(this.font_size){
 			this.div.style("font-size",this.font_size+"px");
 		}
+		
+		if(this.chart.event_layer.svg  && this.axis_scan &&
+				(this.chart.direction == "x" || this.chart.direction == "y")){
+			this.chart.event_layer.svg.call(this.add_axis_tooltip_listener,this);
+			if(this.show_scan_line){
+				this.chart.event_layer.svg
+					.insert("rect",".ccd3_zoom")  // use insert not to prevent zoom
+					.attr("visibility","none")
+					.attr("class","ccd3_axis_scan_line")
+					.attr("fill","gray")
+					.attr("opacity", 0.2)
+					;
+			}
+		}
 	};
-	ccd3.Parts.Tooltip.prototype.add_listener = function(e,instance){
-		var that = instance;
+	ccd3.Parts.Tooltip.prototype.add_listener = function(e,that){
 		e.on("mouseover.tooltip",function(d){
 			var series_num = d3.select(this.parentNode).data()[0] % 1000; // magic number 1000
 			that.div
@@ -857,9 +897,158 @@ var ccd3 = function(){
 		e.on("mousemove.tooltip",function(){
 			ccd3.get_instance(this).tooltip.div
 				.style("top", (d3.event.pageY-10)+"px")
-				.style("left",(d3.event.pageX+10)+"px")
+				.style("left",(d3.event.pageX+15)+"px")
 				;
 		});
+	};
+	ccd3.Parts.Tooltip.prototype.add_axis_tooltip_listener = function(e,that){
+		var prev_data_x,prev_data_y;
+		e.on("mouseover.axis_tooltip",function(d){
+			that.chart.tooltip.div
+				.style("display",null)
+				.style("opacity", 0.8)
+				;
+			that.chart.event_layer.svg.select(".ccd3_axis_scan_line").attr("visibility","visible");
+			prev_data_x = null;
+			prev_data_y = null;
+		});
+		e.on("mouseout.axis_tooltip",function(){
+			ccd3.get_instance(this).tooltip.div
+				.style("opacity", 0)
+				.style("display","none")
+				;
+			for(var i=0;i<that.chart.series.length;i++){
+				that.chart.series[i].highlight({}); // turn off highlight
+			}
+			that.chart.event_layer.svg.select(".ccd3_axis_scan_line").attr("visibility","hidden");
+			prev_data_x = null;
+			prev_data_y = null;
+		});
+		if(that.chart.direction == "x"){
+			e.on("mousemove.axis_tooltip",function(){
+				// search nearest data 
+				var xAxis = that.chart.xAxis;
+				var d3mouse = d3.mouse(that.chart.event_layer.svg[0][0]);
+				var mouse_x = d3mouse[0];
+				var mouse_y = d3mouse[1];
+				if(ccd3.env.isIE){ // IE problem ...
+					mouse_x = d3.event.offsetX;
+					mouse_y = d3.event.offsetY;
+				}
+				var data_x,i,band_width;
+				if(xAxis.scale_type == "ordinal"){
+					var left_edges = xAxis.scale.range();
+					band_width = xAxis.scale.rangeBand();
+					for(i=0; mouse_x > (left_edges[i] + band_width); i++) {}
+					data_x = xAxis.scale.domain()[i];
+				}else{
+					data_x = xAxis.scale.invert(mouse_x);
+				}
+				
+				that.div.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+15)+"px");
+				
+				if(prev_data_x == data_x){
+					return; // skip rerendering to improve performance
+				}
+				prev_data_x = data_x;
+				
+				var values = that.chart.dataset_manager.lookup("x",data_x,true);
+				
+				// highlight series
+				for(i=0;i<values.length;i++){
+					that.chart.series[values[i].series_num].highlight(values[i]);
+				}
+				
+				// create & show tooltip
+				var html = "";
+				html += "<b>" + that.xFormat(values[0].x) + "</b>";
+				for(i=0;i<values.length;i++){
+					html += "<br/><span style='color:"+that.chart._color(values[i].series_num)+";'>&#8226;</span> ";
+					html += values[i].series_name + ": " + that.yFormat(values[i].y);
+				}
+				that.div.html(html);
+			
+				// show axis scan line
+				if(that.show_scan_line){
+					if(that.chart.dataset_manager.has_series_type("bar") || 
+							that.chart.dataset_manager.has_series_type("stackedbar")){
+						if(xAxis.scale_type=="ordinal"){
+							that.scan_line_width = xAxis.scale.rangeBand() * (1.0 + xAxis.band_padding);
+						}else{
+							that.scan_line_width = xAxis.scale(xAxis.min_step) - xAxis.scale(0);
+						}
+					}
+					var line_x = xAxis.scale(values[0].x) - that.scan_line_width/2 +
+						((xAxis.scale_type == "ordinal")? band_width/2 : 0);
+					that.chart.event_layer.svg.select(".ccd3_axis_scan_line")
+						.attr("x",line_x).attr("width",that.scan_line_width)
+						.attr("y",0).attr("height",that.chart.inner_height).attr("visibility","visible");
+				}
+			});
+		}else if(that.chart.direction == "y"){
+			e.on("mousemove.axis_tooltip",function(){
+				// search nearest data 
+				var yAxis = that.chart.yAxis;
+				var d3mouse = d3.mouse(that.chart.event_layer.svg[0][0]);
+				var mouse_x = d3mouse[0];
+				var mouse_y = d3mouse[1];
+				if(ccd3.env.isIE){ // IE problem ...
+					mouse_x = d3.event.offsetX;
+					mouse_y = d3.event.offsetY;
+				}
+				var data_y,i,band_width;
+				if(yAxis.scale_type == "ordinal"){
+					var left_edges = yAxis.scale.range();
+					band_width = yAxis.scale.rangeBand();
+					for(i=0; mouse_y > (left_edges[i] + band_width); i++) {}
+					data_y = yAxis.scale.domain()[i];
+				}else{
+					data_y = yAxis.scale.invert(mouse_y);
+				}
+				
+				that.div.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+15)+"px");
+				
+				if(prev_data_y == data_y){
+					return; // skip rerendering to improve performance
+				}
+				prev_data_y = data_y;
+				
+				var values = that.chart.dataset_manager.lookup("y",data_y,true);
+				
+				// highlight series
+				for(i=0;i<values.length;i++){
+					that.chart.series[values[i].series_num].highlight(values[i]);
+				}
+				
+				// create & show tooltip
+				var html = "";
+				html += "<b>" + that.yFormat(values[0].y) + "</b>";
+				for(i=0;i<values.length;i++){
+					html += "<br/><span style='color:"+that.chart._color(values[i].series_num)+";'>&#8226;</span> ";
+					html += values[i].series_name + ": " + that.xFormat(values[i].x);
+				}
+				that.div.html(html);
+			
+				// show axis scan line
+				if(that.show_scan_line){
+					if(that.chart.dataset_manager.has_series_type("bar") || 
+							that.chart.dataset_manager.has_series_type("stackedbar")){
+						if(yAxis.scale_type=="ordinal"){
+							that.scan_line_width = yAxis.scale.rangeBand() * (1.0 + yAxis.band_padding);
+						}else{
+							that.scan_line_width = yAxis.scale(yAxis.min_step) - yAxis.scale(0);
+						}
+					}
+					var line_y = yAxis.scale(values[0].y) - that.scan_line_width/2 +
+						((yAxis.scale_type == "ordinal")? band_width/2 : 0);
+					that.chart.event_layer.svg.select(".ccd3_axis_scan_line")
+						.attr("y",line_y).attr("height",that.scan_line_width)
+						.attr("x",0).attr("width",that.chart.inner_width).attr("visibility","visible");
+				}
+			});
+
+		}
+
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -880,6 +1069,10 @@ var ccd3 = function(){
 					}
 					if(this.dataset[0].series_type === "pie"){
 						this.series[0].sort = undefined;
+					}
+					this.zoomed = false;
+					if(this.zoom instanceof ccd3.Parts){
+						this.zoom.remove_reset_button();
 					}
 					this.render(); 
 				}},
@@ -939,7 +1132,6 @@ var ccd3 = function(){
 			});
 		}
 		this.arrange(this.chart.width-this.icon_width-this.icon_right,this.icon_top);
-		
 	};
 	ccd3.Parts.Menu.prototype.toggle_menu = function(){
 		var that = this;
@@ -1453,7 +1645,31 @@ var ccd3 = function(){
 		}
 		this.scale.domain(domain);
 	};
+	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.EventLayer                                             */
+	/* ------------------------------------------------------------------ */
 
+	ccd3.Parts.EventLayer = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.EventLayer.prototype = new ccd3.Parts();
+	ccd3.Parts.EventLayer.prototype.get_defaults = function(){ return {}; };
+	ccd3.Parts.EventLayer.prototype.render = function(){
+		if(this.svg === undefined){
+			this.svg = this.chart.series_container.svg
+				.append("g")
+				.attr("class","ccd3_event_layer");
+			this.svg.append("rect")
+				.attr("class","background")
+				.attr("opacity",0)
+				.attr("x",0).attr("y",0)
+				;
+		}
+		this.svg.select("rect.background")
+			.attr("width",this.chart.inner_width)
+			.attr("height",this.chart.inner_height)
+			;
+	};
+	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Zoom                                                   */
 	/* ------------------------------------------------------------------ */
@@ -1466,7 +1682,10 @@ var ccd3 = function(){
 	ccd3.Parts.Zoom.prototype.get_defaults = function(){
 		return {
 			use: true,
-			font_size: 12
+			font_size: 12,
+			margin_left: null,
+			margin_top: null,
+			button_svg: null
 		};
 	};
 	ccd3.Parts.Zoom.prototype.render = function(){
@@ -1477,19 +1696,19 @@ var ccd3 = function(){
 			.x(this.chart.xAxis.scale)
 			.y(this.chart.yAxis.scale)
 			.on("brushend",function(){
-				that.zoom(); 
+				that.zoom();	
 			})
 			;
 		
-		this.svg = this.chart.series_container.svg
+		this.svg = this.chart.event_layer.svg
 			.append("g")
-			.attr("class","ccd3_brush")
+			.attr("class","ccd3_zoom")
+			.attr("cursor","crosshair")
 			.attr("fill","gray")
 			.attr("opacity",0.3)
-			.attr("stroke","gray",3)
-			.attr("stroke-width",2)
 			.call(this.brush)
 			;
+		
 	};
 	ccd3.Parts.Zoom.prototype.zoom = function(){
 		if(this.brush.empty()) return;
@@ -1507,8 +1726,9 @@ var ccd3 = function(){
 		c.render({dont_reset_domain:true});
 		
 		this.brush.clear();
-		c.svg.selectAll(".ccd3_brush").call(this.brush);
-		var button = c.series_container.svg
+		c.svg.selectAll(".ccd3_event_layer").call(this.brush);
+		
+		this.button_svg = c.series_container.svg
 			.append("g")
 			.attr("class","ccd3_zoom_reset_button")
 			.attr("cursor","pointer")
@@ -1538,24 +1758,37 @@ var ccd3 = function(){
 				that.reset_zoom();
 			})
 			;
-		button
-			.attr("transform",function(){
-				return "translate(" + (that.chart.inner_width - this.getBBox().width - 10) + ",5)";
-			})
+		this.button_svg
 			.call(function(e){
 				e
 				.select("rect")
 				.attr("width",function(){ return this.nextSibling.getBBox().width + 10; })
 				;
-			})
-			;
+			});
+		this.rearrange_reset_button();
 	};
 	ccd3.Parts.Zoom.prototype.reset_zoom = function(){
 		var c = this.chart;
 		c.zoomed = false;
 		c.render();
-		c.series_container.svg.selectAll(".ccd3_zoom_reset_button").remove();
+		c.zoom.remove_reset_button();
 	};
+	ccd3.Parts.Zoom.prototype.remove_reset_button = function(){
+		if(this.button_svg){
+			this.button_svg.remove();
+			this.button_svg = null;
+		}
+	};
+	ccd3.Parts.Zoom.prototype.rearrange_reset_button = function(){
+		if(this.button_svg){
+			var that = this;
+			this.button_svg
+				.attr("transform",function(){
+					return "translate(" + (that.chart.inner_width - this.getBBox().width - 10) + ",5)";
+				});
+		}
+	};
+
 	
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Series                                                 */
@@ -1629,15 +1862,13 @@ var ccd3 = function(){
 			return false;
 		}
 	};
+	ccd3.Parts.Series.prototype.highlight_series = function(){};
 	ccd3.Parts.Series.prototype.highlight = function(){};
 	ccd3.Parts.Series.prototype.tooltip_html = function(d){
-		//console.log(this.chart.dataset_manager.lookup("x",d.x));
-		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
-		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + xFormat(d.x);
-		html += "<br>y: " + yFormat(d.y);
+		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
+		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
 		return html;
 	};
 	
@@ -1725,7 +1956,7 @@ var ccd3 = function(){
 		circles.call(this.exit);
 
 	};
-	ccd3.Parts.Series.Scatter.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.Scatter.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_circle_g circle")
 				.attr("r",this.point_radius_highlight);
@@ -1734,7 +1965,18 @@ var ccd3 = function(){
 				.attr("r",this.point_radius);
 		}
 	};
-	
+	ccd3.Parts.Series.Scatter.prototype.highlight = function(data){
+		var that = this;
+		this.svg.selectAll(".ccd3_circle_g circle")
+			.attr("r",function(d){
+				if(""+d.x == ""+data.x && ""+d.y == ""+data.y){ // to compare Date object converting to string
+					return that.point_radius_highlight;
+				}else{
+					return that.point_radius;
+				}
+			});
+	};
+
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Series.Bar                                             */
 	/* ------------------------------------------------------------------ */
@@ -1867,7 +2109,7 @@ var ccd3 = function(){
 		// exit
 		bars.call(this.exit);
 	};
-	ccd3.Parts.Series.Bar.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.Bar.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_bar_g")
 				.style("opacity",1);
@@ -1875,6 +2117,17 @@ var ccd3 = function(){
 			this.svg.selectAll(".ccd3_bar_g")
 				.style("opacity",this.opacity);
 		}
+	};
+	ccd3.Parts.Series.Bar.prototype.highlight = function(data){
+		var that = this;
+		this.svg.selectAll(".ccd3_bar_g")
+			.style("opacity",function(d){
+				if(""+d.x == ""+data.x && ""+d.y == ""+data.y){ // to compare Date object converting to string
+					return 1;
+				}else{
+					return that.opacity;
+				}
+			});
 	};
 
 	/* ------------------------------------------------------------------ */
@@ -2013,7 +2266,7 @@ var ccd3 = function(){
 		bars.call(this.exit);
 
 	};
-	ccd3.Parts.Series.StackedBar.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.StackedBar.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_bar_g")
 				.style("opacity",1);
@@ -2022,7 +2275,18 @@ var ccd3 = function(){
 				.style("opacity",this.opacity);
 		}
 	};
-	
+	ccd3.Parts.Series.StackedBar.prototype.highlight = function(data){
+		var that = this;
+		this.svg.selectAll(".ccd3_bar_g")
+			.style("opacity",function(d){
+				if(""+d.x == ""+data.x && ""+d.y == ""+data.y){ // to compare Date object converting to string
+					return 1;
+				}else{
+					return that.opacity;
+				}
+			});
+	};
+
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Series.Line                                            */
 	/* ------------------------------------------------------------------ */
@@ -2151,7 +2415,7 @@ var ccd3 = function(){
 		// exit
 		circles.call(this.exit);
 	};
-	ccd3.Parts.Series.Line.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.Line.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_circle_g circle")
 				.attr("r",this.point_radius_highlight);
@@ -2163,6 +2427,17 @@ var ccd3 = function(){
 			this.svg.selectAll(".series_path")
 				.attr("stroke-width",this.line_width);
 		}
+	};
+	ccd3.Parts.Series.Line.prototype.highlight = function(data){
+		var that = this;
+		this.svg.selectAll(".ccd3_circle_g circle")
+			.attr("r",function(d){
+				if(""+d.x == ""+data.x && ""+d.y == ""+data.y){ // to compare Date object converting to string
+					return that.point_radius_highlight;
+				}else{
+					return that.point_radius;
+				}
+			});
 	};
 
 	/* ------------------------------------------------------------------ */
@@ -2196,6 +2471,10 @@ var ccd3 = function(){
 				.range([this.min_radius,this.max_radius]).domain([zMin,zMax]);
 		}
 		var zScale = this.zScale;
+		
+		if(!(this.chart.tooltip.zFormat)){
+			this.chart.tooltip.zFormat = this.zFormat;
+		}
 		
 		// data join
 		// http://bl.ocks.org/mbostock/3808218
@@ -2265,7 +2544,7 @@ var ccd3 = function(){
 		// exit
 		circles.call(this.exit);
 	};
-	ccd3.Parts.Series.Bubble.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.Bubble.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_bubble_g")
 				.style("opacity",1);
@@ -2274,15 +2553,23 @@ var ccd3 = function(){
 				.style("opacity",this.opacity);
 		}
 	};
+	ccd3.Parts.Series.Bubble.prototype.highlight = function(data){
+		var that = this;
+		this.svg.selectAll(".ccd3_bubble_g")
+			.style("opacity",function(d){
+				if(""+d.x == ""+data.x && ""+d.y == ""+data.y){ // to compare Date object converting to string
+					return 1.0;
+				}else{
+					return that.opacity;
+				}
+			});
+	};
 	ccd3.Parts.Series.Bubble.prototype.tooltip_html = function(d){
-		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
-		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
-		var zFormat = this.chart.tooltip.zFormat || this.zFormat;
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + xFormat(d.x);
-		html += "<br>y: " + yFormat(d.y);
-		html += "<br>z: " + zFormat(d.z);
+		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
+		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
+		html += "<br>z: " + this.chart.tooltip.zFormat(d.z);
 		return html;
 	};
 	
@@ -2310,6 +2597,10 @@ var ccd3 = function(){
 		var width,height;
 		this.color = this.chart._color(i);
 		var xy_func, text_xy_func;
+		
+		if(!(this.chart.tooltip.zFormat)){
+			this.chart.tooltip.zFormat = this.zFormat;
+		}
 		
 		if(xAxis.scale_type === "ordinal"){
 			width = xScale.rangeBand();
@@ -2403,13 +2694,10 @@ var ccd3 = function(){
 
 	};
 	ccd3.Parts.Series.Heatmap.prototype.tooltip_html = function(d){
-		var xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format;
-		var yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format;
-		var zFormat = this.chart.tooltip.zFormat || this.zFormat;
 		var html = "";
-		html += "x: " + xFormat(d.x);
-		html += "<br>y: " + yFormat(d.y);
-		html += "<br>z: " + zFormat(d.z);
+		html += "x: " + this.chart.tooltip.xFormat(d.x);
+		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
+		html += "<br>z: " + this.chart.tooltip.zFormat(d.z);
 		return html;
 	};
 	
@@ -2431,6 +2719,11 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.Pie.prototype.render = function(){
 		var that = this;
+		
+		if(!(this.chart.tooltip.yFormat)){
+			this.chart.tooltip.yFormat = this.yFormat;
+		}
+		
 		this.radius = Math.min(this.chart.inner_height,this.chart.inner_width)/2;
 		var arc = d3.svg.arc().outerRadius(this.radius*this.radius_nofocus).innerRadius(this.radius*this.inner_radius);
 		
@@ -2557,11 +2850,10 @@ var ccd3 = function(){
 		return (d.endAngle - d.startAngle) / (Math.PI * 2.0);
 	};
 	ccd3.Parts.Series.Pie.prototype.tooltip_html = function(d){
-		var yFormat = this.chart.tooltip.yFormat || this.yFormat;
 		var html = "";
 		html += "<b>" + d.data.x + "</b>";
 		html += "<br>%: " + this.pFormat(this.calc_percent(d));
-		html += "<br>value: " + yFormat(d.data.y);
+		html += "<br>value: " + this.chart.tooltip.yFormat(d.data.y);
 		return html;
 	};
 	
@@ -2659,7 +2951,7 @@ var ccd3 = function(){
 		points.call(this.exit);
 		
 	};
-	ccd3.Parts.Series.Radar.prototype.highlight = function(onoff){
+	ccd3.Parts.Series.Radar.prototype.highlight_series = function(onoff){
 		if(onoff){
 			this.svg.selectAll(".ccd3_poly")
 				.style("fill-opacity",0.5);
@@ -2669,12 +2961,10 @@ var ccd3 = function(){
 		}
 	};
 	ccd3.Parts.Series.Radar.prototype.tooltip_html = function(d){
-		var aFormat = this.chart.tooltip.aFormat || this.chart.aAxis.format;
-		var rFormat = this.chart.tooltip.rFormat || this.chart.rAxis.format;
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + aFormat(d.x);
-		html += "<br>y: " + rFormat(d.y);
+		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
+		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
 		return html;
 	};
 	
@@ -2765,6 +3055,22 @@ var ccd3 = function(){
 		}
 		return false;
 	};
+	ccd3.DatasetManager.prototype.has_series_type = function(series_type){
+		for(var i=0,len=this.dataset.length;i<len;i++){
+			if(this.dataset[i].series_type == series_type){
+				return true;
+			}
+		}
+		return false;
+	};
+	ccd3.DatasetManager.prototype.has_single_series_type = function(series_type){
+		for(var i=0,len=this.dataset.length;i<len;i++){
+			if(this.dataset[i].series_type != series_type){
+				return false;
+			}
+		}
+		return true;
+	};
 	ccd3.DatasetManager.prototype.detect_scale_type = function(func){
 		var sample = func.call(this,this.dataset[0].values[0]);
 		if(sample instanceof Date){
@@ -2847,21 +3153,38 @@ var ccd3 = function(){
 				}
 			}
 		}
-		this["lookup_"+axis] = obj;
+		this["lookup_table_"+axis] = obj;
 	};
-	ccd3.DatasetManager.prototype.lookup = function(axis,value){
-		var ret = this["lookup_"+axis][value];
+	ccd3.DatasetManager.prototype.lookup = function(axis,value,nearest_search){
+		var lookup_table = this["lookup_table_"+axis];
+		var ret = lookup_table[value];
+		
+		if(!(ret) && nearest_search){
+			var min_diff=null,min_value=null;
+			for(var key in lookup_table){
+				if(lookup_table.hasOwnProperty(key)){
+					if(value instanceof Date){
+						key = new Date(key);
+					}
+					if(min_diff===null || Math.abs(key-value) < min_diff){
+						min_diff = Math.abs(key-value);
+						min_value = key;
+					}
+				}
+			}
+			ret = lookup_table[min_value];
+		}
 		return (ret)? ret:[];
 	};
 	ccd3.DatasetManager.prototype.get_axis_sum = function(base_axis,sum_axis){
-		var lookup = this["lookup_"+base_axis];
+		var lookup_table = this["lookup_table_"+base_axis];
 		var ar,sum,ret = {};
-		for(var key in lookup){
-			if(lookup.hasOwnProperty(key)){
+		for(var key in lookup_table){
+			if(lookup_table.hasOwnProperty(key)){
 				sum = 0;
-				ar = lookup[key];
+				ar = lookup_table[key];
 				for(var i=0;i<ar.length;i++){
-					sum += lookup[key][i][sum_axis];
+					sum += lookup_table[key][i][sum_axis];
 				}
 				ret[key] = sum;
 			}
@@ -2893,24 +3216,9 @@ var ccd3 = function(){
 		var voidFormat = function(d){ return d; };
 		var xFormat,yFormat,zFormat;
 		if(this.csv_auto_format){
-			xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format || 
-						this.chart.tooltip.aFormat || this.chart.aAxis.format || voidFormat;
-			if(this.dataset[0].series_type === "pie"){
-				yFormat = this.chart.series[0].yFormat;
-			}else{
-				yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format ||
-							this.chart.tooltip.rFormat || this.chart.rAxis.format || voidFormat;
-			}
-			zFormat = this.chart.tooltip.zFormat;
-			if(zFormat === undefined){
-				for(i=0;i<this.chart.series.length;i++){
-					if(this.chart.series[i].zFormat){
-						zFormat = this.chart.series[i].zFormat;
-						break;
-					}
-				}
-				zFormat = voidFormat;
-			}
+			xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format || this.chart.aAxis.format || voidFormat;
+			yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format || this.chart.rAxis.format || voidFormat;
+			zFormat = this.chart.tooltip.zFormat || voidFormat;
 		}else{
 			xFormat = voidFormat;
 			yFormat = voidFormat;

@@ -31,7 +31,7 @@ module.exports = function(grunt){
 					pretty: true
 				},
 				files : {
-					"ccd3_v<%= pkg.version %>" : ["ccd3.*","dataset_sample.js","LICENSE.txt"]
+					"ccd3_v<%= pkg.version %>" : ["ccd3.*","dataset_sample.js","LICENSE.txt","server/*"]
 				}
 			}
 		}
