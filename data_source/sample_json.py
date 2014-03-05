@@ -19,14 +19,14 @@ def random_series(params):
 	cnt = int(params.getfirst("cnt",20))
 	scale = float(params.getfirst("scale",100))
 	for i in range(0,series_num):
-		ar.append({"name":"series"+str(i+1), "values":[]})
+		ar.append({"name":"series"+str(i+1)+"_"+str(random.random()*1000), "values":[]})
 		v = random.random()*scale
 		for j in range(0,cnt):
 			v += (random.random() -0.5)*scale/cnt
 			ar[i]["values"].append({"x":j,"y":v})
 	return ar
 	
-#time.sleep(1.5)
+time.sleep(1.5)
 dataset = random_series(cgi.FieldStorage())
 
 print("Content-Type: application/json; charset=utf-8\n")

@@ -121,7 +121,7 @@ var ccd3 = function(){
 	
 	ccd3.Chart.prototype.resize = function(){
 		this.width = (d3.select("#"+this.div_id)[0][0].clientWidth || this.width);
-		this.height = (d3.select("#"+this.div_id)[0][0].clientHeight || this.height);
+		//this.height = (d3.select("#"+this.div_id)[0][0].clientHeight || this.height); tmp
 		this.initialized = false;
 	};
 	
@@ -775,7 +775,7 @@ var ccd3 = function(){
 			.call(function(s){
 				s
 				.append("text")
-				.text(function(d,i){ return dataset[i].name; })
+				//.text(function(d,i){ return dataset[i].name; })
 				.attr("y","0.8em")
 				.attr("x","0.8em")
 				.attr("font-size",that.font_size)
@@ -787,6 +787,8 @@ var ccd3 = function(){
 			.attr("visibility",function(d,i){
 				return (dataset[i].visible)? "visible" : "hidden";
 			});
+		item.select("text")
+			.text(function(d,i){ return dataset[i].name; });
 		
 		var x_pos = 0;
 		var y_pos = 0;
@@ -1194,6 +1196,49 @@ var ccd3 = function(){
 		
 	};
 	
+	/* ------------------------------------------------------------------ */
+	/*  ccd3.Parts.OverlayLoading                                                */
+	/* ------------------------------------------------------------------ */
+
+	ccd3.Parts.OverlayLoading = function(){ ccd3.Parts.apply(this,arguments); };
+	ccd3.Parts.OverlayLoading.prototype = new ccd3.Parts();
+	ccd3.Parts.OverlayLoading.prototype.get_defaults = function(){
+		return {
+			font_size: 14
+		};
+	};
+	ccd3.Parts.OverlayLoading.prototype.render = function(onoff){
+		var that = this;
+		
+		if(this.chart.svg === undefined) return; // chart is not ready
+		if(this.svg===undefined){
+			this.svg = this.chart.svg.append("g").attr("class","ccd3_overlay");
+			this.svg.append("rect").attr("class","ccd3_overlay_rect")
+				.attr("fill","white").attr("opacity",0.6);
+			this.svg.append("text").attr("class","ccd3_overlay_message")
+				.attr("font-size",this.font_size);
+		}
+		this.svg.select(".ccd3_overlay_rect")
+			.attr("width",that.chart.width)
+			.attr("height",that.chart.height)
+			;
+		this.svg.select(".ccd3_overlay_message")
+			.text("Now Loading ...")
+			.attr("x",function(){
+				return that.chart.width/2 - this.getBBox().width/2;
+			})
+			.attr("y",function(){
+				return that.chart.height/2 - this.getBBox().height/2;
+			})
+			;
+	
+		if(onoff){
+			this.svg.attr("visibility","visible");
+		}else{
+			this.svg.attr("visibility","hidden");
+		}
+	};
+
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Parts.Axis                                                   */
 	/* ------------------------------------------------------------------ */
@@ -3262,6 +3307,11 @@ var ccd3 = function(){
 		this.dataset_filter = undefined;
 	};
 	ccd3.DatasetLoader.prototype.xhr_load = function(params){
+		if(!(this.chart.overlay_loading instanceof ccd3.Parts.OverlayLoading)){
+			this.chart.overlay_loading = new ccd3.Parts.OverlayLoading(this.chart,{});
+		}
+		this.chart.overlay_loading.render(true);
+		
 		var url = this.setup_url(params,this.base_url);
 		d3.json(url,function(dataset){
 			if(this.dataset_filter){
@@ -3269,6 +3319,7 @@ var ccd3 = function(){
 			}
 			this.chart.set_dataset(dataset);
 			this.chart.render();
+			this.chart.overlay_loading.render(false);
 		}.bind(this));
 	};
 	ccd3.DatasetLoader.prototype.setup_url = function(params,url){
