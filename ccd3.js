@@ -2697,6 +2697,9 @@ var ccd3 = function(){
 			.attr("class","ccd3_rect_g")
 			.style("opacity",0)
 			.call(function(e){
+				e.append("rect");
+			})
+			.call(function(e){
 				e
 				.append("text")
 				.attr("font-size",that.font_size)
