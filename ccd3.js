@@ -2662,14 +2662,12 @@ var ccd3 = function(){
 		height += 1;
 		
 		// cScale = color Scale
-		if(this.cScale === undefined){
-			var zMax = this.chart.dataset_manager.get_max(function(d){return d.z;});
-			var zMin = this.chart.dataset_manager.get_min(function(d){return d.z;});
-			// interpolate pattern http://bl.ocks.org/mbostock/3014589
-			this.cScale = d3.scale.linear()
-				.range([this.low_color, this.high_color]).domain([zMin,zMax])
-				.interpolate(d3.interpolateHsl);
-		}
+		var zMax = this.chart.dataset_manager.get_max(function(d){return d.z;});
+		var zMin = this.chart.dataset_manager.get_min(function(d){return d.z;});
+		// interpolate pattern http://bl.ocks.org/mbostock/3014589
+		this.cScale = d3.scale.linear()
+			.range([this.low_color, this.high_color]).domain([zMin,zMax])
+			.interpolate(d3.interpolateHsl);
 		var cScale = this.cScale;
 		
 		xy_func = function(d){
@@ -2699,15 +2697,10 @@ var ccd3 = function(){
 			.attr("class","ccd3_rect_g")
 			.style("opacity",0)
 			.call(function(e){
-				e.append("rect").attr("fill",function(d){ return that.cScale(d.z); });
-			})
-			.call(function(e){
 				e
 				.append("text")
+				.attr("font-size",that.font_size)
 				.attr("text-anchor","middle")
-				.text(function(d){
-					return that.zFormat(d.z);
-				})
 				;
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
@@ -2723,14 +2716,18 @@ var ccd3 = function(){
 				.select("rect")
 				.attr("width",width)
 				.attr("height",height)
+				.attr("fill",function(d){ return that.cScale(d.z); })
 				;
 			})
 			.call(function(e){
 				e
 				.select("text")
 				.attr("visibility",function(){ return (text_visibility)? "visible":"hidden"; })
-				.attr("font-size",that.font_size)
-				.attr("transform",text_xy_func);
+				.attr("transform",text_xy_func)
+				.text(function(d){
+					return that.zFormat(d.z);
+				})
+				;
 			})
 			;
 	
