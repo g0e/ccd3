@@ -1920,8 +1920,8 @@ var ccd3 = function(){
 	ccd3.Parts.Series.prototype.tooltip_html = function(d){
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
-		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
+		html += "<br>x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
+		html += "<br>y: " + this.chart.tooltip.yFormat(ccd3.Util.extract_axis_text(d.y));
 		return html;
 	};
 	
@@ -2650,8 +2650,8 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Bubble.prototype.tooltip_html = function(d){
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
-		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
+		html += "<br>x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
+		html += "<br>y: " + this.chart.tooltip.yFormat(ccd3.Util.extract_axis_text(d.y));
 		html += "<br>z: " + this.chart.tooltip.zFormat(d.z);
 		return html;
 	};
@@ -2947,7 +2947,7 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.Pie.prototype.tooltip_html = function(d){
 		var html = "";
-		html += "<b>" + d.data.x + "</b>";
+		html += "<b>" + ccd3.Util.extract_axis_text(d.data.x) + "</b>";
 		html += "<br>%: " + this.pFormat(this.calc_percent(d));
 		html += "<br>value: " + this.chart.tooltip.yFormat(d.data.y);
 		return html;
@@ -3065,7 +3065,7 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Radar.prototype.tooltip_html = function(d){
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
-		html += "<br>x: " + this.chart.tooltip.xFormat(d.x);
+		html += "<br>x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
 		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
 		return html;
 	};
