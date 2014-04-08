@@ -964,7 +964,7 @@ var ccd3 = function(){
 				
 				// create & show tooltip
 				var html = "";
-				html += "<b>" + that.xFormat(values[0].x) + "</b>";
+				html += "<b>" + that.xFormat(ccd3.Util.extract_axis_text(values[0].x)) + "</b>";
 				for(i=0;i<values.length;i++){
 					html += "<br/><span style='color:"+that.chart._color(values[i].series_num)+";'>&#8226;</span> ";
 					html += values[i].series_name + ": " + that.yFormat(values[i].y);
@@ -1025,7 +1025,7 @@ var ccd3 = function(){
 				
 				// create & show tooltip
 				var html = "";
-				html += "<b>" + that.yFormat(values[0].y) + "</b>";
+				html += "<b>" + that.yFormat(ccd3.Util.extract_axis_text(values[0].y)) + "</b>";
 				for(i=0;i<values.length;i++){
 					html += "<br/><span style='color:"+that.chart._color(values[i].series_num)+";'>&#8226;</span> ";
 					html += values[i].series_name + ": " + that.xFormat(values[i].x);
