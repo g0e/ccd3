@@ -842,7 +842,8 @@ var ccd3 = function(){
 			font_size: 10,
 			xFormat: undefined,
 			yFormat: undefined,
-			zFormat: undefined
+			zFormat: undefined,
+			annotation_func: function(){ return ""; }
 		};
 	};
 	ccd3.Parts.Tooltip.prototype.render = function(){
@@ -883,7 +884,7 @@ var ccd3 = function(){
 		e.on("mouseover.tooltip",function(d){
 			var series_num = d3.select(this.parentNode).data()[0] % 1000; // magic number 1000
 			that.div
-				.html(that.chart.series[series_num].tooltip_html(d))
+				.html(that.chart.series[series_num].tooltip_html(d) + that.annotation_func(d))
 				.style("display",null)
 				//.transition().duration(300)
 				.style("opacity", 0.8)
@@ -1333,7 +1334,7 @@ var ccd3 = function(){
 			func = function(d){ return d[direction]; };
 			for(var i=0,len=this.chart.dataset.length;i<len;i++){
 				if(this.chart.dataset[i].visible){
-					domain = domain.concat(this.chart.dataset[i].values.map(func));
+					domain = domain.concat(this.chart.dataset[i].values.map(func).sort());
 				}
 			}
 		}else{
@@ -1434,8 +1435,11 @@ var ccd3 = function(){
 				.attr("font-size",this.font_size)
 				.attr("transform", function(){
 					return "translate(" + this.getBBox().height*-0.5 + "," + that.tick_padding+")rotate(-90)";
-				})
-			;
+				});
+		this.svg.selectAll(".tick text").each(function(e){
+			var t = d3.select(this).text();
+			d3.select(this).text(ccd3.Util.extract_axis_text(t));
+		});
 		
 		/*
 		this.svg.selectAll(".ccd3_xAxis path, .ccd3_xAxis .tick line")
@@ -1495,7 +1499,11 @@ var ccd3 = function(){
 				.attr("class","ccd3_y_tick_label")
 				.attr("font-size",this.font_size)
 			;
-		
+		this.svg.selectAll(".tick text").each(function(e){
+			var t = d3.select(this).text();
+			d3.select(this).text(ccd3.Util.extract_axis_text(t));
+		});
+	
 		/*
 		this.svg.selectAll(".ccd3_yAxis path, .ccd3_yAxis .tick line")
 			.attr("fill","none")
@@ -1969,6 +1977,12 @@ var ccd3 = function(){
 				d3.select(this).select("circle").attr("r",that.point_radius);
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2128,6 +2142,12 @@ var ccd3 = function(){
 				d3.select(this).style("opacity",that.opacity);
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2282,6 +2302,12 @@ var ccd3 = function(){
 				d3.select(this).style("opacity",that.opacity);
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2438,6 +2464,12 @@ var ccd3 = function(){
 					;
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2551,6 +2583,12 @@ var ccd3 = function(){
 				d3.select(this).style("opacity",that.opacity);
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2628,7 +2666,8 @@ var ccd3 = function(){
 		return {
 			low_color: "red",
 			high_color: "green",
-			zFormat: ccd3.Util.default_numeric_format
+			zFormat: ccd3.Util.default_numeric_format,
+			onclick_customize_func: null,
 		};
 	};
 	ccd3.Parts.Series.Heatmap.prototype.render = function(){
@@ -2707,6 +2746,12 @@ var ccd3 = function(){
 				;
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			;
 		
 		// update
@@ -2740,8 +2785,8 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Series.Heatmap.prototype.tooltip_html = function(d){
 		var html = "";
-		html += "x: " + this.chart.tooltip.xFormat(d.x);
-		html += "<br>y: " + this.chart.tooltip.yFormat(d.y);
+		html += "x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
+		html += "<br>y: " + this.chart.tooltip.yFormat(ccd3.Util.extract_axis_text(d.y));
 		html += "<br>z: " + this.chart.tooltip.zFormat(d.z);
 		return html;
 	};
@@ -2796,6 +2841,12 @@ var ccd3 = function(){
 			.attr("class","ccd3_arc_g")
 			.style("opacity",this.opacity)
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			.on("mouseover", function(){
 				d3.select(this)
 					.style("opacity",1)
@@ -2972,6 +3023,12 @@ var ccd3 = function(){
 		points.enter()
 			.append("g")
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
+			.call(function(e){
+				if(that.onclick_customize_func){
+					e.on("click.customize_func",that.onclick_customize_func);
+					e.attr("cursor","pointer");
+				}
+			})
 			.attr("class","ccd3_points_g")
 			.call(function(e){
 				e.append("circle").attr("fill",that.color).attr("r",that.point_radius);
@@ -3458,6 +3515,13 @@ var ccd3 = function(){
 		
 		return dataset;
 	};
-	
+	// oridnal scaleの時のソート用prefixを除去する
+	ccd3.Util.extract_axis_text = function(t){
+		if(t.indexOf && t.indexOf("___")>=0){
+			return t.split("___")[1];
+		}
+		return t;
+	};
+
 	return ccd3;
 }();

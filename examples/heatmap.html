@@ -84,6 +84,34 @@ window.onload = function(){
 		c.width = 360;
 		c.render();
 	})();
+	
+	(function(){
+		var div_id = "chart4-1";
+		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
+		var data = (new ccd3t.DatasetGenerator(
+			{ series_cnt:1, values_cnt:100, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }
+		)).generate();
+		values = data[0].values
+		for(var i=0;i<values.length;i++){
+			if(values[i].y=="00004"){
+				values[i].y= "a___004";
+			}
+		}
+		var c = new ccd3.Chart(div_id,data);
+		c.title.text = "customize event test";
+		c.default_series_type = "heatmap";
+		c.series_options.heatmap.low_color = "white";
+		c.series_options.heatmap.high_color = "green";
+		c.series_options.heatmap.onclick_customize_func = function(){
+			console.log(d3.select(this).datum());
+		};
+		c.tooltip.annotation_func = function(d){
+			return "<div>" + d.x + " unko " + d.y + "</div>";
+		}
+		c.height = 360;
+		c.width = 360;
+		c.render();
+	})();
 
 };
 -->
