@@ -355,7 +355,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","y",data.asc);
 							data.asc = !(data.asc);
-						},label: "Sort X By Y"},"sort_x_by_y"
+						},label: "ソート(X軸)"},"sort_x_by_y"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -363,7 +363,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","z",data.asc);
 							data.asc = !(data.asc);
-						},label: "Sort X By Z"},"sort_x_by_z"
+						},label: "ソート(X軸)"},"sort_x_by_z"
 					);
 				}
 			}
@@ -373,7 +373,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","x",data.asc);
 							data.asc = !(data.asc);
-						},label: "Sort Y By X"},"sort_y_by_x"
+						},label: "ソート(Y軸)"},"sort_y_by_x"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -381,7 +381,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","z",data.asc);
 							data.asc = !(data.asc);
-						},label: "Sort Y By Z"},"sort_y_by_z"
+						},label: "ソート(Y軸)"},"sort_y_by_z"
 					);
 				}
 			}
@@ -395,7 +395,7 @@ var ccd3 = function(){
 						this.series[0].sort = "asc";
 					}
 					this.render({dont_reset_domain:true});
-				},label: "Sort"},"sort"
+				},label: "ソート"},"sort"
 			);
 		}else if(this.chart_pattern === "ra"){
 			this.rAxis.init_scale();
@@ -1063,10 +1063,10 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(){
 		return {
 			menus: [ 
-				{ key:"csv", label:"CSV Download", func:function(){ 
+				{ key:"csv", label:"CSV形式でダウンロード", func:function(){ 
 					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
 				} },
-				{ key:"reset", label:"Reset Chart", func:function(){
+				{ key:"reset", label:"チャートを再描画", func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
@@ -1079,7 +1079,7 @@ var ccd3 = function(){
 					}
 					this.render(); 
 				}},
-				{ key:"close", label:"Close Menu", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"close", label:"メニューを閉じる", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
@@ -3331,9 +3331,9 @@ var ccd3 = function(){
 			for(j=0;j<dataset[i].values.length;j++){
 				row = [dataset[i].name];
 				d = dataset[i].values[j];
-				if(d.x!==undefined){ row.push(xFormat(d.x)); }else{ row.push(""); }
-				if(d.y!==undefined){ row.push(yFormat(d.y)); }else{ row.push(""); }
-				if(d.z!==undefined){ row.push(zFormat(d.z)); }else{ row.push(""); }
+				if(d.x!==undefined){ row.push(xFormat(ccd3.Util.extract_axis_text(d.x))); }else{ row.push(""); }
+				if(d.y!==undefined){ row.push(yFormat(ccd3.Util.extract_axis_text(d.y))); }else{ row.push(""); }
+				if(d.z!==undefined){ row.push(zFormat(ccd3.Util.extract_axis_text(d.z))); }else{ row.push(""); }
 				ar.push(row);
 			}
 		}
