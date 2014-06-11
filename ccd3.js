@@ -3347,7 +3347,7 @@ var ccd3 = function(){
 		
 		var f = d3.select("body").append("form").attr("method","POST").attr("action",ccd3.options.csv_echo_path());
 		f.append("input").attr("name","file_name").attr("value",file_name).attr("type","hidden");
-		f.append("input").attr("name","file_contents").attr("value",file_contents).attr("type","hidden");
+		f.append("textarea").attr("name","file_contents").attr("type","hidden").text(file_contents);
 		if(ccd3.options.csrf_post_tag){
 			f.append("div").html(ccd3.options.csrf_post_tag);
 		}
