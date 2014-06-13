@@ -1309,6 +1309,10 @@ var ccd3 = function(){
 			
 			// not to show same tick_label twice, force tickValues by Axis.format
 			var cur_ticks = this.scale.ticks();
+			if(cur_ticks.length === 0){
+				this.tick_values = undefined;
+				return;
+			}
 			var new_ticks = [];
 			if(cur_ticks.length>=2 && this.format(cur_ticks[0]) != this.format(cur_ticks[1])){
 				new_ticks.push(cur_ticks[0]);
@@ -2123,6 +2127,7 @@ var ccd3 = function(){
 			.enter()
 			.append("g")
 			.attr("class","ccd3_bar_g")
+			.attr("transform", "rotate(0)")
 			.style("opacity",0)
 			.call(function(e){
 				e.append("rect").attr("fill",that.color);
@@ -2286,6 +2291,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e.append("rect").attr("fill",that.color);
 			})
+			.attr("transform", "rotate(0)")
 			.call(function(e){
 				e
 				.append("text")
@@ -2437,6 +2443,7 @@ var ccd3 = function(){
 			.enter()
 			.append("g")
 			.attr("class","ccd3_circle_g")
+			.attr("transform", "rotate(0)")
 			.style("opacity",0)
 			.call(function(e){
 				e.append("circle").attr("fill",that.color).attr("r",that.point_radius);
@@ -2475,6 +2482,7 @@ var ccd3 = function(){
 		// update
 		circles
 			.transition().duration(500)
+			.attr("transform", "rotate(0)")
 			.attr("transform",function(d){
 				return "translate("+calc_x(d)+","+calc_y(d)+")";
 			})
