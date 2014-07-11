@@ -3386,8 +3386,10 @@ var ccd3 = function(){
 			if(this.dataset_filter){
 				dataset = this.dataset_filter.apply(this,[dataset]);
 			}
-			if(this.onload_error && dataset === null){
-				this.onload_error();
+			if(dataset === null){
+				if(this.onload_error !== undefined){
+					this.onload_error();
+				}
 			}else{
 				this.chart.set_dataset(dataset);
 				this.chart.render();
