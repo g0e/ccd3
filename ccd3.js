@@ -520,9 +520,9 @@ var ccd3 = function(){
 	};
 	
 	ccd3.Chart.prototype.destroy = function(){
-		d3.select("#"+this.div_id)
-			.selectAll("*").remove();
+		d3.select("#"+this.div_id).selectAll("*").remove();
 		d3.select("#tooltip_"+this.div_id).remove();
+		delete ccd3.instances[this.div_id];
 	};
 
 	ccd3.Chart.prototype._color = function(i){
@@ -3373,6 +3373,7 @@ var ccd3 = function(){
 		this.base_url = undefined;
 		this.url_params = {};
 		this.dataset_filter = undefined;
+		this.onload_error = undefined;
 	};
 	ccd3.DatasetLoader.prototype.xhr_load = function(params){
 		if(!(this.chart.overlay_loading instanceof ccd3.Parts.OverlayLoading)){
@@ -3385,8 +3386,12 @@ var ccd3 = function(){
 			if(this.dataset_filter){
 				dataset = this.dataset_filter.apply(this,[dataset]);
 			}
-			this.chart.set_dataset(dataset);
-			this.chart.render();
+			if(this.onload_error && dataset === null){
+				this.onload_error();
+			}else{
+				this.chart.set_dataset(dataset);
+				this.chart.render();
+			}
 			this.chart.overlay_loading.render(false);
 		}.bind(this));
 	};
