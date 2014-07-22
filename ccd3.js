@@ -2742,6 +2742,7 @@ var ccd3 = function(){
 		rects
 			.enter()
 			.append("g")
+			.attr("transform", "rotate(0)")
 			.attr("class","ccd3_rect_g")
 			.style("opacity",0)
 			.call(function(e){
