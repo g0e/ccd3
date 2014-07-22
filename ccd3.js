@@ -2135,6 +2135,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e
 				.append("text")
+				.attr("transform", "rotate(0)")
 				.text(function(d){
 					return format(value_func(d));
 				})
@@ -2749,6 +2750,7 @@ var ccd3 = function(){
 			.call(function(e){
 				e
 				.append("text")
+				.attr("transform", "rotate(0)")
 				.attr("font-size",that.font_size)
 				.attr("text-anchor","middle")
 				;
