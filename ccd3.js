@@ -3470,10 +3470,10 @@ var ccd3 = function(){
 	};
 	ccd3.Util.default_numeric_format = function(d){
 		// ref https://github.com/mbostock/d3/wiki/Formatting 
-		return d3.format(",.2s")(d); // 120k
+		// return d3.format(",.2s")(d); // 120k
 		// return d3.format(",.0f")(d); // 123,456
 		// return d3.format(",.2f")(d); // 123,456.78
-		// return d3.format(",.3r")(d); // 123,000 or 0.0123
+		return d3.format(",.3r")(d); // 123,000 or 0.0123
 	};
 	ccd3.Util.default_date_format = function(d){
 		// ref https://github.com/mbostock/d3/wiki/Time-Formatting
