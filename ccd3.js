@@ -899,7 +899,7 @@ var ccd3 = function(){
 		});
 		e.on("mousemove.tooltip",function(){
 			ccd3.get_instance(this).tooltip.div
-				.style("top", (d3.event.pageY-10)+"px")
+				.style("top", (d3.event.pageY+10)+"px")
 				.style("left",function(){
 					var div_width = that.div[0][0].clientWidth;
 					var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
@@ -960,7 +960,7 @@ var ccd3 = function(){
 				}
 				
 				that.div
-					.style("top", (d3.event.pageY-10)+"px")
+					.style("top", (d3.event.pageY+10)+"px")
 					.style("left",function(){
 						var div_width = that.div[0][0].clientWidth;
 						var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
@@ -1035,7 +1035,7 @@ var ccd3 = function(){
 				}
 				
 				that.div
-					.style("top", (d3.event.pageY-10)+"px")
+					.style("top", (d3.event.pageY+10)+"px")
 					.style("left",function(){
 						var div_width = that.div[0][0].clientWidth || 50;
 						var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
