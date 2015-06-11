@@ -899,6 +899,9 @@ var ccd3 = function(){
 		});
 		e.on("mousemove.tooltip",function(){
 			ccd3.get_instance(this).tooltip.div
+				.style("display",function(){
+					return (that.div[0][0].clientWidth > 0)? null:"none";
+				})
 				.style("top", (d3.event.pageY+10)+"px")
 				.style("left",function(){
 					var div_width = that.div[0][0].clientWidth;
@@ -908,9 +911,6 @@ var ccd3 = function(){
 					}else{
 						return (d3.event.pageX+15)+"px";
 					}
-				})
-				.style("display",function(){
-					return (that.div[0][0].clientWidth > 0)? null:"none";
 				})
 				;
 		});
@@ -960,6 +960,9 @@ var ccd3 = function(){
 				}
 				
 				that.div
+					.style("display",function(){
+						return (that.div[0][0].clientWidth > 0)? null:"none";
+					})
 					.style("top", (d3.event.pageY+10)+"px")
 					.style("left",function(){
 						var div_width = that.div[0][0].clientWidth;
@@ -969,9 +972,6 @@ var ccd3 = function(){
 						}else{
 							return (d3.event.pageX+15)+"px";
 						}
-					})
-					.style("display",function(){
-						return (that.div[0][0].clientWidth > 0)? null:"none";
 					})
 					;
 				
@@ -1035,6 +1035,9 @@ var ccd3 = function(){
 				}
 				
 				that.div
+					.style("display",function(){
+						return (that.div[0][0].clientWidth > 0)? null:"none";
+					})
 					.style("top", (d3.event.pageY+10)+"px")
 					.style("left",function(){
 						var div_width = that.div[0][0].clientWidth || 50;
@@ -1044,9 +1047,6 @@ var ccd3 = function(){
 						}else{
 							return (d3.event.pageX+15)+"px";
 						}
-					})
-					.style("display",function(){
-						return (that.div[0][0].clientWidth > 0)? null:"none";
 					})
 					;
 				

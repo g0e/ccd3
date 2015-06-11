@@ -26,8 +26,9 @@
 	background-color: white;
 	font-size: 12px;
 	position: absolute;
-	z-index: 10;
+	z-index: 999999;
 	border-radius: 5px;
+	max-width: 240px;
 }
 
 
