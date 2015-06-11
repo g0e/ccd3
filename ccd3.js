@@ -900,7 +900,18 @@ var ccd3 = function(){
 		e.on("mousemove.tooltip",function(){
 			ccd3.get_instance(this).tooltip.div
 				.style("top", (d3.event.pageY-10)+"px")
-				.style("left",(d3.event.pageX+15)+"px")
+				.style("left",function(){
+					var div_width = that.div[0][0].clientWidth;
+					var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
+					if(offset_x+div_width > that.chart.width){
+						return (d3.event.pageX-15-div_width)+"px";
+					}else{
+						return (d3.event.pageX+15)+"px";
+					}
+				})
+				.style("display",function(){
+					return (that.div[0][0].clientWidth > 0)? null:"none";
+				})
 				;
 		});
 	};
@@ -948,7 +959,21 @@ var ccd3 = function(){
 					data_x = xAxis.scale.invert(mouse_x);
 				}
 				
-				that.div.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+15)+"px");
+				that.div
+					.style("top", (d3.event.pageY-10)+"px")
+					.style("left",function(){
+						var div_width = that.div[0][0].clientWidth;
+						var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
+						if(offset_x+div_width > that.chart.width){
+							return (d3.event.pageX-15-div_width)+"px";
+						}else{
+							return (d3.event.pageX+15)+"px";
+						}
+					})
+					.style("display",function(){
+						return (that.div[0][0].clientWidth > 0)? null:"none";
+					})
+					;
 				
 				if(prev_data_x == data_x){
 					return; // skip rerendering to improve performance
@@ -1009,7 +1034,21 @@ var ccd3 = function(){
 					data_y = yAxis.scale.invert(mouse_y);
 				}
 				
-				that.div.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+15)+"px");
+				that.div
+					.style("top", (d3.event.pageY-10)+"px")
+					.style("left",function(){
+						var div_width = that.div[0][0].clientWidth || 50;
+						var offset_x = d3.mouse(d3.select("#"+that.chart.div_id)[0][0])[0];
+						if(offset_x+div_width > that.chart.width){
+							return (d3.event.pageX-15-div_width)+"px";
+						}else{
+							return (d3.event.pageX+15)+"px";
+						}
+					})
+					.style("display",function(){
+						return (that.div[0][0].clientWidth > 0)? null:"none";
+					})
+					;
 				
 				if(prev_data_y == data_y){
 					return; // skip rerendering to improve performance
