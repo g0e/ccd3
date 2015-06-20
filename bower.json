@@ -24,7 +24,7 @@
   "repository": {
     "type": "git",
 	"url": "git://github.com/g0e/ccd3.git"
-  }
+  },
   "dependencies": {
     "d3": "~3.*.*"
   }
