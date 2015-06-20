@@ -7,7 +7,7 @@ ccd3
 * MIT License
 
 ## Version
-* latest stable release 0.9.6
+* latest stable release 1.0.0
 
 ## Requirements
 * depends only on d3.js(>=3.4.1)

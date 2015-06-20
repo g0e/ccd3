@@ -2,11 +2,11 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
 		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../ccd3.js"></script>
-		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/ccd3.js"></script>
+		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
@@ -47,7 +47,7 @@ window.onload = function(){
 		var c = new ccd3.Chart(div_id);
 		c.title.text = "dataset ajax reload";
 		c.default_series_type = "line";
-		c.loader.base_url = "./../data_source/sample_json.py?cnt=30";
+		c.loader.base_url = "./data_source/sample_json.py?cnt=30";
 		c.loader.url_params = {series_num:2, scale:10};
 		c.loader.dataset_filter = function(dataset){
 			dataset[0].visible = false;

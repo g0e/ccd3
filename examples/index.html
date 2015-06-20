@@ -3,10 +3,10 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=8;IE=9"/>
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
 		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../ccd3.js"></script>
-		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/ccd3.js"></script>
+		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
 		<style type="text/css">
 <!--
 #charts > div{
@@ -17,7 +17,6 @@
 		<script type="text/javascript">
 <!--
 window.onload = function(){
-	ccd3.options.echo_script = "server/echo_csv.rb";
 	(function(){
 		var div_id = "chart1";
 		/* prepare dataset */
@@ -83,7 +82,6 @@ window.onload = function(){
 	<body>
 		<h1>ccd3 sample charts</h1>
 		<ul>
-			<li><a href="http://g0e.net:7357">Jasmine Test</a></li>
 			<li><a href="./series_type.html">series_type examples</a></li>
 			<li><a href="./complex_series_type.html">complex series_type examples</a></li>
 			<li><a href="./heatmap.html">heatmap examples</a></li>

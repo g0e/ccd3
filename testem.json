@@ -1,8 +1,8 @@
 {
 	"test_page" : "test.mustache",
 	"serve_files" : [
-		"ccd3.js",
-		"dataset_sample.js",
+		"dist/ccd3.js",
+		"dist/dataset_sample.js",
 		"vendor/d3.v3/d3.v3.js",
 		"tests/*.js"
 	]

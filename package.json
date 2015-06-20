@@ -1,6 +1,6 @@
 {
   "name": "ccd3",
-  "version": "0.9.6",
+  "version": "1.0.0",
   "description": "customizable chart for d3.js",
   "main": "ccd3.js",
   "repository": {
@@ -17,6 +17,7 @@
     "grunt-contrib-uglify": "~0.3.2",
     "grunt-contrib-jshint": "~0.8.0",
     "grunt-contrib-cssmin": "~0.7.0",
-    "grunt-contrib-compress": "~0.6.0"
+    "grunt-contrib-compress": "~0.6.0",
+    "grunt-contrib-copy": "~0.8.0"
   }
 }

@@ -1,0 +1,34 @@
+.ccd3{
+	font-size:10px;
+	font-family:'Lucida Grande','Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+}
+
+/* text color */
+.ccd3 text{
+	fill: black;
+}
+
+/* chart grid */
+.ccd3_xAxis .tick line,
+.ccd3_yAxis .tick line,
+.ccd3_xAxis path,
+.ccd3_yAxis path{
+	fill: none;
+	stroke: lightgray;
+	stroke-width: 1;
+}
+
+/* tooltip */
+.ccd3_tooltip{
+	font-size:12px;
+	font-family:'Lucida Grande','Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+	padding: 5px;
+	background-color: white;
+	font-size: 12px;
+	position: absolute;
+	z-index: 999999;
+	border-radius: 5px;
+	max-width: 240px;
+}
+
+
