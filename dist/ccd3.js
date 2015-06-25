@@ -3538,6 +3538,11 @@ var ccd3 = function(){
 		return dataset;
 	};
 	ccd3.Util.dataset_from_array = function(ar,rules,options){
+		/* rule examples
+			{x:0,y:1}
+			[{x:0,y:1},{x:0,y:2}]
+			[{x:"label1",y:"label2"},{x:"label1",y:"label3"}]
+		*/
 		if(!options){ options = {}; }
 		var dataset = [],values,value,v;
 		var rule,header;
@@ -3567,7 +3572,9 @@ var ccd3 = function(){
 				}
 				values.push(value);
 			}
-			dataset.push({values:values});
+			tmp = ccd3.Util.copy(rule);
+			tmp.values = values;
+			dataset.push(tmp);
 		}
 		
 		return dataset;
