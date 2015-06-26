@@ -97,6 +97,7 @@ var ccd3 = function(){
 		this.chart_pattern = undefined;
 		this.direction = undefined;
 		this.show_values = "onzoom"; // always, onzoom
+		this.show_values_format = undefined;
 		this.zoomed = false;
 		this.default_series_type = "scatter";
 		this.stack_type = "zero"; // use as args of stack.offset
@@ -2009,7 +2010,11 @@ var ccd3 = function(){
 				.attr("text-anchor","middle")
 				.attr("y","-0.5em")
 				.text(function(d){
-					return yFormat(d.y);
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return yFormat(d.y);
+					}
 				})
 				;
 			})
@@ -2176,7 +2181,11 @@ var ccd3 = function(){
 				.append("text")
 				.attr("transform", "rotate(0)")
 				.text(function(d){
-					return format(value_func(d));
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return format(value_func(d));
+					}
 				})
 				;
 			})
@@ -2336,7 +2345,11 @@ var ccd3 = function(){
 				e
 				.append("text")
 				.text(function(d){
-					return format(value_func(d));
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return format(value_func(d));
+					}
 				})
 				.attr("transform","rotate(90)")
 				;
@@ -2494,7 +2507,11 @@ var ccd3 = function(){
 				.attr("text-anchor","middle")
 				.attr("y","-0.5em")
 				.text(function(d){
-					return yFormat(d.y);
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return yFormat(d.y);
+					}
 				})
 				;
 			})
@@ -2620,7 +2637,11 @@ var ccd3 = function(){
 				.attr("text-anchor","middle")
 				.attr("y","0.4em")
 				.text(function(d){
-					return that.zFormat(d.z);
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return that.zFormat(d.z);
+					}
 				})
 				;
 			})
@@ -2823,7 +2844,11 @@ var ccd3 = function(){
 				.attr("visibility",function(){ return (text_visibility)? "visible":"hidden"; })
 				.attr("transform",text_xy_func)
 				.text(function(d){
-					return that.zFormat(d.z);
+					if(that.chart.show_values_format){
+						return that.chart.show_values_format(d);
+					}else{
+						return that.zFormat(d.z);
+					}
 				})
 				;
 			})

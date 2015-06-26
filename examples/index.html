@@ -52,10 +52,11 @@ window.onload = function(){
 		/* customize chart */
 		//c.xAxis.format = d3.time.format("%m/%d %H:%M");
 		c.title.text = "Sample Chart1";
-		c.default_series_type = "stackedbar";
+		c.default_series_type = "bubble";
 		c.tooltip.annotation_func = function(d){
 			return "<br/>label:"+d.label; 
 		};
+		//c.show_values_format = function(d){ return d.label; };
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;
 		//c.yAxis.domain_min = 0;
