@@ -31,7 +31,7 @@ var ccd3t = function(){
 	};
 	ccd3t.DatasetGenerator.prototype.generate = function(cond){
 		if(cond){ ccd3.Util.merge(this,cond); }
-		var axis = ["x","y","z"];
+		var axis = ["x","y","z","label"];
 		this.dataset = [];
 		var series,values,value,cur_axis,pos;
 		
