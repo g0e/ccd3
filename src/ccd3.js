@@ -3545,7 +3545,7 @@ var ccd3 = function(){
 		*/
 		if(!options){ options = {}; }
 		var dataset = [],values,value,v;
-		var rule,header;
+		var rule,header,tmp;
 		
 		if(!(rules instanceof Array)){ rules = [rules]; }
 		
