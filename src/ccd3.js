@@ -3570,6 +3570,10 @@ var ccd3 = function(){
 					v = ar[j][rule.z];
 					value.z = (rule.z_format)? rule.z_format(v) : v;
 				}
+				if(rule.label !== undefined){
+					v = ar[j][rule.label];
+					value.label = (rule.label_format)? rule.label_format(v) : v;
+				}
 				values.push(value);
 			}
 			tmp = ccd3.Util.copy(rule);
