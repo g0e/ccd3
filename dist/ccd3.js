@@ -1813,6 +1813,7 @@ var ccd3 = function(){
 		var c = this.chart;
 		var b = this.brush.extent();
 		c.zoomed = true;
+		that.remove_reset_button();
 		
 		c.xAxis.scale.domain([b[0][0],b[1][0]]); 
 		if(c.direction === "y"){
