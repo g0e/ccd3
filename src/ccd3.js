@@ -3571,7 +3571,7 @@ var ccd3 = function(){
 		*/
 		if(!options){ options = {}; }
 		var dataset = [],values,value,v;
-		var rule,header,tmp;
+		var rule,header,tmp,dict;
 		
 		if(!(rules instanceof Array)){ rules = [rules]; }
 		
@@ -3582,6 +3582,7 @@ var ccd3 = function(){
 		for(var i=0;i<rules.length;i++){
 			rule = rules[i];
 			values = [];
+			dict = {};
 			for(var j=0;j<ar.length;j++){
 				value = {};
 				if(rule.x !== undefined){
@@ -3600,13 +3601,29 @@ var ccd3 = function(){
 					v = ar[j][rule.label];
 					value.label = (rule.label_format)? rule.label_format(v) : v;
 				}
-				values.push(value);
+				if(rule.group !== undefined){
+					if(!dict[ar[j][rule.group]]){
+						dict[ar[j][rule.group]] = [];
+					}
+					dict[ar[j][rule.group]].push(value);
+				}else{
+					values.push(value);
+				}
 			}
-			tmp = ccd3.Util.copy(rule);
-			tmp.values = values;
-			dataset.push(tmp);
+			if(values.length > 0){
+				tmp = ccd3.Util.copy(rule);
+				tmp.values = values;
+				dataset.push(tmp);
+			}else{
+				var groups = Object.keys(dict);
+				for(var k=0;k<groups.length;k++){
+					tmp = ccd3.Util.copy(rule);
+					tmp.name = groups[k];
+					tmp.values = dict[groups[k]];
+					dataset.push(tmp);
+				}
+			}
 		}
-		
 		return dataset;
 	};
 	// oridnal scaleの時のソート用prefixを除去する
