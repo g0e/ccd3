@@ -1429,8 +1429,8 @@ var ccd3 = function(){
 			}else{
 				domain = [max, min];
 			}
-			this.domain_min = min;
-			this.domain_max = max;
+			this.reset_domain_min = min;
+			this.reset_domain_max = max;
 		}
 		this.scale.domain(domain);
 	};
@@ -1882,7 +1882,7 @@ var ccd3 = function(){
 
 		// callback
 		if(this.onzoom_reset){
-			this.onzoom_reset({x_min:c.xAxis.domain_min,x_max:c.xAxis.domain_max,y_min:c.yAxis.domain_min,y_max:c.yAxis.domain_max});
+			this.onzoom_reset({x_min:c.xAxis.reset_domain_min,x_max:c.xAxis.reset_domain_max,y_min:c.yAxis.reset_domain_min,y_max:c.yAxis.reset_domain_max});
 		}
 	};
 	ccd3.Parts.Zoom.prototype.remove_reset_button = function(){
@@ -2756,7 +2756,12 @@ var ccd3 = function(){
 			.call(function(e){
 				e
 				.select("circle")
-				.attr("r",function(d){ return zScale(d.z); })
+				.attr("r",function(d){
+					var z = zScale(d.z);
+					z = (z > that.max_radius)? that.max_radius:z;
+					z = (z < that.min_radius)? that.min_radius:z;
+					return z;
+				})
 				;
 			})
 			.call(function(e){
