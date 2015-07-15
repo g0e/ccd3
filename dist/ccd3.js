@@ -1,7 +1,7 @@
 /**
 ccd3
 
-Copyright (c) 2014 Masafumi.OSOGOE
+Copyright (c) 2014-2015 Masafumi.OSOGOE
 
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "0.9.6"
+		version: "1.2.0"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -1429,6 +1429,8 @@ var ccd3 = function(){
 			}else{
 				domain = [max, min];
 			}
+			this.domain_min = min;
+			this.domain_max = max;
 		}
 		this.scale.domain(domain);
 	};
@@ -1782,7 +1784,9 @@ var ccd3 = function(){
 			font_size: 12,
 			margin_left: null,
 			margin_top: null,
-			button_svg: null
+			button_svg: null,
+			onzoom: undefined,
+			onzoom_reset: undefined,
 		};
 	};
 	ccd3.Parts.Zoom.prototype.render = function(){
@@ -1864,12 +1868,22 @@ var ccd3 = function(){
 				;
 			});
 		this.rearrange_reset_button();
+
+		// callback
+		if(this.onzoom){
+			this.onzoom({x_min:b[0][0],x_max:b[1][0],y_min:b[0][1],y_max:b[1][1]});
+		}
 	};
 	ccd3.Parts.Zoom.prototype.reset_zoom = function(){
 		var c = this.chart;
 		c.zoomed = false;
 		c.render();
 		c.zoom.remove_reset_button();
+
+		// callback
+		if(this.onzoom_reset){
+			this.onzoom_reset({x_min:c.xAxis.domain_min,x_max:c.xAxis.domain_max,y_min:c.yAxis.domain_min,y_max:c.yAxis.domain_max});
+		}
 	};
 	ccd3.Parts.Zoom.prototype.remove_reset_button = function(){
 		if(this.button_svg){
@@ -2594,6 +2608,11 @@ var ccd3 = function(){
 			opacity: 0.7,
 			max_radius: 10,
 			min_radius: 3,
+			draw_line: false,
+			line_width: 1, // use if draw_line == true
+			line_width_highlight: 3, // use if draw_line == true
+			domain_z_max: undefined,
+			domain_z_min: undefined,
 			zFormat: ccd3.Util.default_numeric_format
 		};
 	};
@@ -2605,20 +2624,69 @@ var ccd3 = function(){
 		var yScale = this.chart.yAxis.scale;
 		var xAxis = this.chart.xAxis;	
 		var yAxis = this.chart.yAxis;	
+		var zMax,zMin;
 		this.color = this.chart._color(i);
 		
-		if(this.zScale===undefined){
-			var zMax = this.chart.dataset_manager.get_max(function(d){return d.z;});
-			var zMin = this.chart.dataset_manager.get_min(function(d){return d.z;});
-			this.zScale = d3.scale.linear()
-				.range([this.min_radius,this.max_radius]).domain([zMin,zMax]);
+		if(this.domain_z_max !== undefined){
+			zMax = this.domain_z_max;
+		}else{
+			zMax = this.chart.dataset_manager.get_max(function(d){
+				var xpos = xScale(d.x);
+				var ypos = yScale(d.y);
+				var con = that.chart.series_container;
+				return (xpos > 0 && xpos < con.width && ypos > 0 && ypos < con.height)? d.z:null;
+			});
 		}
+		if(this.domain_z_min !== undefined){
+			zMin = this.domain_z_min;
+		}else{
+			zMin = this.chart.dataset_manager.get_min(function(d){
+				var xpos = xScale(d.x);
+				var ypos = yScale(d.y);
+				var con = that.chart.series_container;
+				return (xpos > 0 && xpos < con.width && ypos > 0 && ypos < con.height)? d.z:null;
+			});
+		}
+		this.zScale = d3.scale.linear().range([this.min_radius,this.max_radius]).domain([zMin,zMax]);
 		var zScale = this.zScale;
 		
 		if(!(this.chart.tooltip.zFormat)){
 			this.chart.tooltip.zFormat = this.zFormat;
 		}
 		
+
+		/* line */
+		if(this.draw_line){
+			// render line first not to prevent tooltip mouseover
+			// data join
+			var data = (this.series.visible)? [0] : [];
+			var path_def = d3.svg.line()
+				.x(function(d){ return xScale(d.x); })
+				.y(function(d){ return yScale(d.y); })
+				.interpolate("linear")
+				;
+			var path = this.svg.selectAll("path").data(data);
+			// enter
+			path
+				.enter()
+				.append("path")
+				.attr("class","series_path")
+				.attr("stroke",that.color)
+				.attr("stroke-width",that.line_width)
+				.attr("fill","none")
+				.style("opacity",0)	
+				;
+			// update
+			path
+				.transition().duration(500)
+				.attr("d",path_def(that.get_data()))
+				.style("opacity",that.opacity)
+				;
+			// exit
+			path.call(this.exit);
+		}
+
+		/* bubble */
 		// data join
 		// http://bl.ocks.org/mbostock/3808218
 		var circles = this.svg.selectAll(".ccd3_bubble_g").data(that.get_data());
@@ -2648,9 +2716,15 @@ var ccd3 = function(){
 			})
 			.on("mouseover", function(){
 				d3.select(this).style("opacity",1);
+				d3.select(this.parentNode).select(".series_path")
+					.attr("stroke-width",that.line_width_highlight)
+					;
 			})
 			.on("mouseout", function(){
 				d3.select(this).style("opacity",that.opacity);
+				d3.select(this.parentNode).select(".series_path")
+					.attr("stroke-width",that.line_width)
+					;
 			})
 			.call(that.chart.tooltip.add_listener,that.chart.tooltip)
 			.call(function(e){
