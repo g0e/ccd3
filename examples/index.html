@@ -76,7 +76,15 @@ window.onload = function(){
 		//c.show_legend = false;
 		//c.show_tooltip = false;
 		//c.show_values = "always";
-		
+		c.series_options = {bubble:{max_radius:50,min_radius:10,domain_z_min:0,draw_line:true}}
+		c.zoom.onzoom = function(b){
+			console.log("onzoom called");
+			console.log(b);
+		}
+		c.zoom.onzoom_reset = function(b){
+			console.log("onzoom_reset called");
+			console.log(b);
+		}
 		/* render chart */
 		c.render();
 		
