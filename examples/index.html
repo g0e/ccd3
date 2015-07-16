@@ -56,6 +56,16 @@ window.onload = function(){
 		c.tooltip.annotation_func = function(d){
 			return "<br/>label:"+d.label; 
 		};
+		c.dataset_to_csv_array = function(ds){
+			var ar=[],tmp,d;
+			for(var i=0;i<ds.length;i++){
+				for(var j=0;j<ds[i].values.length;j++){
+					d = ds[i].values[j];
+					ar.push([d.x,d.y]);
+				}
+			}
+			return ar;
+		};
 		//c.show_values_format = function(d){ return d.label; };
 		//c.xAxis.band_padding = 0;
 		//c.yAxis.band_padding = 0;

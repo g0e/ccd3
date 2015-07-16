@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "1.2.0"
+		version: "1.2.2"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -101,6 +101,7 @@ var ccd3 = function(){
 		this.zoomed = false;
 		this.default_series_type = "scatter";
 		this.stack_type = "zero"; // use as args of stack.offset
+		this.dataset_to_csv_array = undefined;
 		
 		// ccd3.DatasetLoader
 		this.loader = new ccd3.DatasetLoader(this);
@@ -2634,7 +2635,7 @@ var ccd3 = function(){
 				var xpos = xScale(d.x);
 				var ypos = yScale(d.y);
 				var con = that.chart.series_container;
-				return (xpos > 0 && xpos < con.width && ypos > 0 && ypos < con.height)? d.z:null;
+				return (xpos >= 0 && xpos <= con.width && ypos >= 0 && ypos <= con.height)? d.z:null;
 			});
 		}
 		if(this.domain_z_min !== undefined){
@@ -3466,32 +3467,65 @@ var ccd3 = function(){
 			}
 		}));
 	};
-	ccd3.DatasetManager.prototype.to_csv = function(dataset){
-		if(dataset === undefined){ dataset = this.dataset; }
-		var ar=[["label","x","y","z"]],csv="",row,d,i,j;
-		
-		var voidFormat = function(d){ return d; };
-		var xFormat,yFormat,zFormat;
-		if(this.csv_auto_format){
-			xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format || this.chart.aAxis.format || voidFormat;
-			yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format || this.chart.rAxis.format || voidFormat;
-			zFormat = this.chart.tooltip.zFormat || voidFormat;
-		}else{
-			xFormat = voidFormat;
-			yFormat = voidFormat;
-			zFormat = voidFormat;
-		}
-		
-		for(i=0;i<dataset.length;i++){
-			for(j=0;j<dataset[i].values.length;j++){
-				row = [dataset[i].name];
-				d = dataset[i].values[j];
-				if(d.x!==undefined){ row.push(xFormat(ccd3.Util.extract_axis_text(d.x))); }else{ row.push(""); }
-				if(d.y!==undefined){ row.push(yFormat(ccd3.Util.extract_axis_text(d.y))); }else{ row.push(""); }
-				if(d.z!==undefined){ row.push(zFormat(ccd3.Util.extract_axis_text(d.z))); }else{ row.push(""); }
-				ar.push(row);
+	ccd3.DatasetManager.prototype.get_visible_dataset = function(){
+		var dataset = this.dataset;
+		var res=[],ds,d;
+		var xScale = this.chart.xAxis.scale, xpos;
+		var yScale = this.chart.yAxis.scale, ypos;
+		var con = this.chart.series_container;
+		for(var i=0;i<dataset.length;i++){
+			if(dataset[i].visible){
+				ds = ccd3.Util.copy(dataset[i]);
+				ds.values = [];
+				for(var j=0;j<dataset[i].values.length;j++){
+					d = dataset[i].values[j];
+					xpos = xScale(d.x);
+					ypos = yScale(d.y);
+					if(xpos >= 0 && xpos <= con.width && ypos >= 0 && ypos <= con.height){
+						ds.values.push(d);
+					}
+				}
+				if(ds.values.length > 0){
+					res.push(ds);
+				}
 			}
 		}
+		return res;
+	};
+	ccd3.DatasetManager.prototype.to_csv = function(dataset){
+		if(dataset === undefined){
+			dataset = (this.chart.zoomed)? this.get_visible_dataset(this.dataset):this.dataset;
+		}
+		var ar,i;
+		if(this.chart.dataset_to_csv_array === undefined){
+			ar=[["label","x","y","z"]];
+			var row,d,j;
+			var voidFormat = function(d){ return d; };
+			var xFormat,yFormat,zFormat;
+			if(this.csv_auto_format){
+				xFormat = this.chart.tooltip.xFormat || this.chart.xAxis.format || this.chart.aAxis.format || voidFormat;
+				yFormat = this.chart.tooltip.yFormat || this.chart.yAxis.format || this.chart.rAxis.format || voidFormat;
+				zFormat = this.chart.tooltip.zFormat || voidFormat;
+			}else{
+				xFormat = voidFormat;
+				yFormat = voidFormat;
+				zFormat = voidFormat;
+			}
+			
+			for(i=0;i<dataset.length;i++){
+				for(j=0;j<dataset[i].values.length;j++){
+					row = [dataset[i].name];
+					d = dataset[i].values[j];
+					if(d.x!==undefined){ row.push(xFormat(ccd3.Util.extract_axis_text(d.x))); }else{ row.push(""); }
+					if(d.y!==undefined){ row.push(yFormat(ccd3.Util.extract_axis_text(d.y))); }else{ row.push(""); }
+					if(d.z!==undefined){ row.push(zFormat(ccd3.Util.extract_axis_text(d.z))); }else{ row.push(""); }
+					ar.push(row);
+				}
+			}
+		}else{
+			ar = this.chart.dataset_to_csv_array(dataset);
+		}
+		var csv = "";
 		for(i=0;i<ar.length;i++){
 			csv += '"' + ar[i].join('","') + '"\n';
 		}
@@ -3679,6 +3713,9 @@ var ccd3 = function(){
 				if(rule.label !== undefined){
 					v = ar[j][rule.label];
 					value.label = (rule.label_format)? rule.label_format(v) : v;
+				}
+				if(rule.include_source){
+					value._source = ccd3.Util.copy(ar[j]);
 				}
 				if(rule.group !== undefined){
 					if(!dict[ar[j][rule.group]]){
