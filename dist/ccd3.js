@@ -18,7 +18,7 @@ var ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "1.2.2"
+		version: "1.2.4"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -2773,18 +2773,6 @@ var ccd3 = function(){
 				.attr("text-anchor",function(){
 					var bb = this.getBBox();
 					var dx = d3.select(this.parentNode).datum().x;
-					var x = xScale(dx);
-					if(1.0*x - 1.1*bb.height/2.0 <= 0){
-						return "start";
-					}else if(1.0*x + 1.1*bb.height/2.0 >= cWidth){
-						return "end";
-					}else{
-						return "middle";
-					}
-				})
-				.attr("text-anchor",function(){
-					var bb = this.getBBox();
-					var dx = d3.select(this.parentNode).datum().x;
 					var x;
 					if(xAxis.scale_type==="ordinal"){
 						x = xScale(dx) + xScale.rangeBand()/2;
@@ -2813,7 +2801,7 @@ var ccd3 = function(){
 					}else if(1.0*y + 1.1*bb.height/2.0 >= cHeight){
 						return "text-after-edge";
 					}else{
-						return "middle";
+						return "auto";
 					}
 				})
 				;
