@@ -2626,6 +2626,8 @@ var ccd3 = function(){
 		var xAxis = this.chart.xAxis;	
 		var yAxis = this.chart.yAxis;	
 		var zMax,zMin;
+		var cWidth = this.chart.series_container.width;
+		var cHeight = this.chart.series_container.height;
 		this.color = this.chart._color(i);
 		
 		if(this.domain_z_max !== undefined){
@@ -2634,8 +2636,7 @@ var ccd3 = function(){
 			zMax = this.chart.dataset_manager.get_max(function(d){
 				var xpos = xScale(d.x);
 				var ypos = yScale(d.y);
-				var con = that.chart.series_container;
-				return (xpos >= 0 && xpos <= con.width && ypos >= 0 && ypos <= con.height)? d.z:null;
+				return (xpos >= 0 && xpos <= cWidth && ypos >= 0 && ypos <= cHeight)? d.z:null;
 			});
 		}
 		if(this.domain_z_min !== undefined){
@@ -2644,8 +2645,7 @@ var ccd3 = function(){
 			zMin = this.chart.dataset_manager.get_min(function(d){
 				var xpos = xScale(d.x);
 				var ypos = yScale(d.y);
-				var con = that.chart.series_container;
-				return (xpos > 0 && xpos < con.width && ypos > 0 && ypos < con.height)? d.z:null;
+				return (xpos > 0 && xpos < cWidth && ypos > 0 && ypos < cHeight)? d.z:null;
 			});
 		}
 		this.zScale = d3.scale.linear().range([this.min_radius,this.max_radius]).domain([zMin,zMax]);
@@ -2770,6 +2770,52 @@ var ccd3 = function(){
 				.select("text")
 				.attr("visibility",function(){ return (text_visibility)? "visible":"hidden"; })
 				.attr("font-size",that.font_size)
+				.attr("text-anchor",function(){
+					var bb = this.getBBox();
+					var dx = d3.select(this.parentNode).datum().x;
+					var x = xScale(dx);
+					if(1.0*x - 1.1*bb.height/2.0 <= 0){
+						return "start";
+					}else if(1.0*x + 1.1*bb.height/2.0 >= cWidth){
+						return "end";
+					}else{
+						return "middle";
+					}
+				})
+				.attr("text-anchor",function(){
+					var bb = this.getBBox();
+					var dx = d3.select(this.parentNode).datum().x;
+					var x;
+					if(xAxis.scale_type==="ordinal"){
+						x = xScale(dx) + xScale.rangeBand()/2;
+					}else{
+						x = xScale(dx);
+					}
+					if(1.0*x - 1.1*bb.width/2.0 <= 0){
+						return "start";
+					}else if(1.0*x + 1.1*bb.width/2.0 >= cWidth){
+						return "end";
+					}else{
+						return "middle";
+					}
+				})
+				.attr("dominant-baseline",function(){
+					var bb = this.getBBox();
+					var dy = d3.select(this.parentNode).datum().y;
+					var y;
+					if(yAxis.scale_type==="ordinal"){
+						y = yScale(dy) + yScale.rangeBand()/2;
+					}else{
+						y = yScale(dy);
+					}
+					if(1.0*y - 1.1*bb.height/2.0 <= 0){
+						return "text-before-edge";
+					}else if(1.0*y + 1.1*bb.height/2.0 >= cHeight){
+						return "text-after-edge";
+					}else{
+						return "middle";
+					}
+				})
 				;
 			})
 			;
