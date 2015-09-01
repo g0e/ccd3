@@ -98,10 +98,10 @@ window.onload = function(){
 		/* render chart */
 		c.render();
 		d3.select("#image_download_svg").on("mouseover",function(){
-			c.setup_download_handler(d3.select("#image_download_svg")[0][0],"svg");
+			c.setup_download_handler(d3.select("#image_download_svg")[0][0],"svg","chart",2.0);
 		});
 		d3.select("#image_download_png").on("mouseover",function(){
-			c.setup_download_handler(d3.select("#image_download_png")[0][0],"png");
+			c.setup_download_handler(d3.select("#image_download_png")[0][0],"png","chart",2.0);
 		});
 	})();
 };
