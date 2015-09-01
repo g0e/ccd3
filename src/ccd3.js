@@ -532,7 +532,7 @@ var ccd3 = function(){
 		delete ccd3.instances[this.div_id];
 	};
 	
-	ccd3.Chart.prototype.create_canvas = function(callback){
+	ccd3.Chart.prototype.create_canvas = function(callback,size_ratio){
 		var svg_text = this.svg[0][0].outerHTML;
 		var base64_svg_text = btoa(encodeURIComponent(svg_text).replace(/%([0-9A-F]{2})/g, function (match, p1) {
 			return String.fromCharCode('0x' + p1);
@@ -541,18 +541,19 @@ var ccd3 = function(){
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
 		var image = new Image();
-		canvas.width = this.width;
-		canvas.height = this.height;
+		canvas.width = this.width*size_ratio;
+		canvas.height = this.height*size_ratio;
 		image.onload = function(){
-			context.drawImage(image, 0, 0);
+			context.drawImage(image, 0, 0, canvas.width, canvas.height);
 			callback(canvas,base64_svg_text);
 		};
 		image.src = src;
 		return base64_svg_text;
 	};
 	
-	ccd3.Chart.prototype.setup_download_handler = function(elem,image_type,file_name){
+	ccd3.Chart.prototype.setup_download_handler = function(elem,image_type,file_name,size_ratio){
 		file_name = (file_name)?file_name:"chart";
+		size_ratio = (size_ratio)?size_ratio:1.0
 		this.create_canvas(function(c,t){
 			if(image_type == "svg"){
 				elem.href = 'data:image/svg+xml;charset=utf-8;base64,' + t;
@@ -564,7 +565,7 @@ var ccd3 = function(){
 				elem.href = c.toDataURL('image/jpeg');
 				elem.download = file_name+'.jpeg';
 			}
-		});
+		},size_ratio);
 	};
 	
 	ccd3.Chart.prototype._color = function(i){
