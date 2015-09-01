@@ -3,7 +3,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=8;IE=9"/>
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
+		<link rel="stylesheet" href="./../src/ccd3.css" type="text/css" />
 		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
 		<script type="text/javascript" src="./../src/ccd3.js"></script>
 		<script type="text/javascript" src="./../src/dataset_sample.js"></script>
@@ -97,7 +97,12 @@ window.onload = function(){
 		}
 		/* render chart */
 		c.render();
-		
+		d3.select("#image_download_svg").on("mouseover",function(){
+			c.setup_download_handler(d3.select("#image_download_svg")[0][0],"svg");
+		});
+		d3.select("#image_download_png").on("mouseover",function(){
+			c.setup_download_handler(d3.select("#image_download_png")[0][0],"png");
+		});
 	})();
 };
 -->
@@ -116,6 +121,8 @@ window.onload = function(){
 			<li><a href="./black_background.html">black background example</a></li>
 			<li><a href="./resize.html">resize example</a></li>
 		</ul>
+		<a id="image_download_svg">DownloadSVG</a>
+		<a id="image_download_png">DownloadPNG</a>
 		<div id="charts">
 			<div id="chart1" style="width:80%;height:50%;">
 			</div>
