@@ -310,6 +310,8 @@ var ccd3 = function(){
 				.attr("id","svg_"+this.div_id)
 				.attr("class","ccd3")
 				.attr("overflow","hidden") // for IE
+				.attr("font-size","10px")
+				.attr("font-family","Lucida Grande,Hiragino Kaku Gothic ProN,Meiryo,sans-serif")
 				;
 		}
 		this.svg
@@ -1488,13 +1490,11 @@ var ccd3 = function(){
 			d3.select(this).text(ccd3.Util.extract_axis_text(t));
 		});
 		
-		/*
 		this.svg.selectAll(".ccd3_xAxis path, .ccd3_xAxis .tick line")
 			.attr("fill","none")
 			.attr("stroke","lightgray")
 			.attr("stroke-width",1)
 			;
-		*/
 		
 		this.text_height = d3.max(this.svg.selectAll(".ccd3_x_tick_label")[0].map(function(e){ 
 			return e.getBBox().width;
@@ -1551,13 +1551,11 @@ var ccd3 = function(){
 			d3.select(this).text(ccd3.Util.extract_axis_text(t));
 		});
 	
-		/*
 		this.svg.selectAll(".ccd3_yAxis path, .ccd3_yAxis .tick line")
 			.attr("fill","none")
 			.attr("stroke","lightgray")
 			.attr("stroke-width",1)
 			;
-		*/
 		
 		this.text_width = d3.max(this.svg.selectAll(".ccd3_y_tick_label")[0].map(function(e){ 
 			return e.getBBox().width;
