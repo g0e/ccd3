@@ -553,7 +553,7 @@ var ccd3 = function(){
 	
 	ccd3.Chart.prototype.setup_download_handler = function(elem,image_type,file_name,size_ratio){
 		file_name = (file_name)?file_name:"chart";
-		size_ratio = (size_ratio)?size_ratio:1.0
+		size_ratio = (size_ratio)?size_ratio:1.0;
 		this.create_canvas(function(c,t){
 			if(image_type == "svg"){
 				elem.href = 'data:image/svg+xml;charset=utf-8;base64,' + t;
