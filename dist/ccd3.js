@@ -102,6 +102,7 @@ var ccd3 = function(){
 		this.default_series_type = "scatter";
 		this.stack_type = "zero"; // use as args of stack.offset
 		this.dataset_to_csv_array = undefined;
+		this.lang = "en"; // menu language("ja","en")
 		
 		// ccd3.DatasetLoader
 		this.loader = new ccd3.DatasetLoader(this);
@@ -312,13 +313,15 @@ var ccd3 = function(){
 				.attr("overflow","hidden") // for IE
 				.attr("font-size","10px")
 				.attr("font-family","Lucida Grande,Hiragino Kaku Gothic ProN,Meiryo,sans-serif")
+				.attr("xmlns", "http://www.w3.org/2000/svg")
+				.attr("version", 1.1)
 				;
 		}
 		this.svg
 			.attr("width",this.width)
 			.attr("height",this.height)
 			;
-
+		
 		this.inner_width = this.width;
 		this.inner_height = this.height;
 		
@@ -350,7 +353,7 @@ var ccd3 = function(){
 			
 			this.xAxis.init_scale();
 			this.yAxis.init_scale();
-
+			
 			var z_scale_type = this.dataset_manager.detect_scale_type(function(d){return d.z;});
 			var series_sortable = this.dataset_manager.has_single_series_type("bar") || this.dataset_manager.has_single_series_type("stackedbar") || this.dataset_manager.has_single_series_type("heatmap");
 			if(this.xAxis.scale_type == "ordinal" && series_sortable){
@@ -359,7 +362,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","y",data.asc);
 							data.asc = !(data.asc);
-						},label: "ソート(X軸)"},"sort_x_by_y"
+						},label: (this.lang == "ja")?"ソート(X軸)":"Sort by X-Axis"},"sort_x_by_y"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -367,7 +370,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","z",data.asc);
 							data.asc = !(data.asc);
-						},label: "ソート(X軸)"},"sort_x_by_z"
+						},label: (this.lang == "ja")?"ソート(X軸)":"Sort by X-Axis"},"sort_x_by_z"
 					);
 				}
 			}
@@ -377,7 +380,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","x",data.asc);
 							data.asc = !(data.asc);
-						},label: "ソート(Y軸)"},"sort_y_by_x"
+						},label: (this.lang == "ja")?"ソート(Y軸)":"Sort by Y-Axis"},"sort_y_by_x"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -385,7 +388,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","z",data.asc);
 							data.asc = !(data.asc);
-						},label: "ソート(Y軸)"},"sort_y_by_z"
+						},label: (this.lang == "ja")?"ソート(Y軸)":"Sort by Y-Axis"},"sort_y_by_z"
 					);
 				}
 			}
@@ -399,7 +402,7 @@ var ccd3 = function(){
 						this.series[0].sort = "asc";
 					}
 					this.render({dont_reset_domain:true});
-				},label: "ソート"},"sort"
+				},label: (this.lang == "ja")?"ソート":"Sort"},"sort"
 			);
 		}else if(this.chart_pattern === "ra"){
 			this.rAxis.init_scale();
@@ -528,7 +531,43 @@ var ccd3 = function(){
 		d3.select("#tooltip_"+this.div_id).remove();
 		delete ccd3.instances[this.div_id];
 	};
-
+	
+	ccd3.Chart.prototype.create_canvas = function(callback,size_ratio){
+		var svg_text = this.svg[0][0].outerHTML;
+		var base64_svg_text = btoa(encodeURIComponent(svg_text).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+			return String.fromCharCode('0x' + p1);
+		}));
+		var src = 'data:image/svg+xml;charset=utf-8;base64,' + base64_svg_text;
+		var canvas = document.createElement('canvas');
+		var context = canvas.getContext('2d');
+		var image = new Image();
+		canvas.width = this.width*size_ratio;
+		canvas.height = this.height*size_ratio;
+		image.onload = function(){
+			context.drawImage(image, 0, 0, canvas.width, canvas.height);
+			callback(canvas,base64_svg_text);
+		};
+		image.src = src;
+		return base64_svg_text;
+	};
+	
+	ccd3.Chart.prototype.setup_download_handler = function(elem,image_type,file_name,size_ratio){
+		file_name = (file_name)?file_name:"chart";
+		size_ratio = (size_ratio)?size_ratio:1.0;
+		this.create_canvas(function(c,t){
+			if(image_type == "svg"){
+				elem.href = 'data:image/svg+xml;charset=utf-8;base64,' + t;
+				elem.download = file_name+'.svg';
+			}else if(image_type == "png"){
+				elem.href = c.toDataURL('image/png');
+				elem.download = file_name+'.png';
+			}else if(image_type == "jpg"){
+				elem.href = c.toDataURL('image/jpeg');
+				elem.download = file_name+'.jpeg';
+			}
+		},size_ratio);
+	};
+	
 	ccd3.Chart.prototype._color = function(i){
 		return this.color_palette[i%this.color_palette.length];
 	};
@@ -1106,10 +1145,10 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(){
 		return {
 			menus: [ 
-				{ key:"csv", label:"CSV形式でダウンロード", func:function(){ 
+				{ key:"csv", label:(this.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
 					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
 				} },
-				{ key:"reset", label:"チャートを再描画", func:function(){
+				{ key:"reset", label:(this.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
@@ -1122,7 +1161,7 @@ var ccd3 = function(){
 					}
 					this.render(); 
 				}},
-				{ key:"close", label:"メニューを閉じる", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"close", label:(this.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
@@ -1158,7 +1197,6 @@ var ccd3 = function(){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_menu");
 			this.svg_icon = this.svg.append("g").attr("class","ccd3_menu_icon");
 			this.svg_list = this.svg.append("g").attr("class","ccd3_menu_list");
-		
 			this.svg_icon.append("rect").attr("class","ccd3_menu_rect")
 				.attr("width",this.icon_width).attr("height",this.icon_height).attr("fill","white").attr("opacity",0);
 			this.svg_icon.append("rect").attr("class","ccd3_menu_bar").attr("y",1);
