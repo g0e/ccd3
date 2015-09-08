@@ -1339,7 +1339,7 @@ var ccd3 = function(){
 			domain_max: undefined,
 			domain_min: undefined,
 			domain_margin: 0.1,
-			sort_if_ordinal: true,
+			sort_if_ordinal: false,
 			domain_margin_type: undefined, // switch using domain_margin or min_step
 			band_padding: 0.2, // also ref from Series.Bar/StackedBar
 			format: undefined,
