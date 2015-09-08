@@ -1339,6 +1339,7 @@ var ccd3 = function(){
 			domain_max: undefined,
 			domain_min: undefined,
 			domain_margin: 0.1,
+			sort_if_ordinal: true,
 			domain_margin_type: undefined, // switch using domain_margin or min_step
 			band_padding: 0.2, // also ref from Series.Bar/StackedBar
 			format: undefined,
@@ -1419,7 +1420,11 @@ var ccd3 = function(){
 			func = function(d){ return d[direction]; };
 			for(var i=0,len=this.chart.dataset.length;i<len;i++){
 				if(this.chart.dataset[i].visible){
-					domain = domain.concat(this.chart.dataset[i].values.map(func).sort());
+					if(this.sort_if_ordinal){
+						domain = domain.concat(this.chart.dataset[i].values.map(func).sort());
+					}else{
+						domain = domain.concat(this.chart.dataset[i].values.map(func));
+					}
 				}
 			}
 		}else{
