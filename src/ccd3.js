@@ -2021,6 +2021,9 @@ var ccd3 = function(){
 	ccd3.Parts.Series.prototype.tooltip_html = function(d){
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
+		if(d.label){
+			html += "<br>label: " + d.label;
+		}
 		html += "<br>x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
 		html += "<br>y: " + this.chart.tooltip.yFormat(ccd3.Util.extract_axis_text(d.y));
 		return html;
@@ -2069,6 +2072,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return yFormat(d.y);
 					}
@@ -2115,7 +2120,7 @@ var ccd3 = function(){
 				.attr("font-size",that.font_size);
 			})
 			;
-
+		
 		// exit
 		circles.call(this.exit);
 
@@ -2240,6 +2245,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return format(value_func(d));
 					}
@@ -2404,6 +2411,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return format(value_func(d));
 					}
@@ -2566,6 +2575,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return yFormat(d.y);
 					}
@@ -2750,6 +2761,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return that.zFormat(d.z);
 					}
@@ -2875,6 +2888,9 @@ var ccd3 = function(){
 	ccd3.Parts.Series.Bubble.prototype.tooltip_html = function(d){
 		var html = "";
 		html += "<b><span style='color:" + this.color + ";'>&#8226;</span> " + this.series.name + "</b>";
+		if(d.label){
+			html += "<br>label: " + d.label;
+		}
 		html += "<br>x: " + this.chart.tooltip.xFormat(ccd3.Util.extract_axis_text(d.x));
 		html += "<br>y: " + this.chart.tooltip.yFormat(ccd3.Util.extract_axis_text(d.y));
 		html += "<br>z: " + this.chart.tooltip.zFormat(d.z);
@@ -3002,6 +3018,8 @@ var ccd3 = function(){
 				.text(function(d){
 					if(that.chart.show_values_format){
 						return that.chart.show_values_format(d);
+					}else if(d.label){
+						return d.label;
 					}else{
 						return that.zFormat(d.z);
 					}
