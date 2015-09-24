@@ -1145,10 +1145,10 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(chart,options){
 		return {
 			menus: [ 
-				{ key:"csv", label:(chart.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
+				{ key:"csv", label:(chart && chart.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
 					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
 				} },
-				{ key:"reset", label:(chart.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
+				{ key:"reset", label:(chart && chart.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
@@ -1161,7 +1161,7 @@ var ccd3 = function(){
 					}
 					this.render(); 
 				}},
-				{ key:"close", label:(chart.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"close", label:(chart && chart.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
