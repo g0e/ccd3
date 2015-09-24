@@ -107,7 +107,7 @@ var ccd3 = function(){
 		// ccd3.DatasetLoader
 		this.loader = new ccd3.DatasetLoader(this);
 		
-		if(dataset!==undefined){
+		if(dataset !== undefined){
 			this.dataset = dataset;
 		}
 		
@@ -305,7 +305,7 @@ var ccd3 = function(){
 			this.chart_pattern = this.dataset_manager.detect_chart_pattern();
 		}
 		
-		if(this.svg===undefined){
+		if(this.svg === undefined){
 			this.svg = d3.select("#"+this.div_id)
 				.append("svg")
 				.attr("id","svg_"+this.div_id)
@@ -396,7 +396,7 @@ var ccd3 = function(){
 		}else if(this.chart_pattern === "r"){
 			this.menu.add_menu({
 				func: function(data){
-					if(this.series[0].sort === undefined || this.series[0].sort == "asc"){
+					if(this.series[0].sort === undefined || this.series[0].sort === null || this.series[0].sort == "asc"){
 						this.series[0].sort = "desc";
 					}else{
 						this.series[0].sort = "asc";
@@ -419,7 +419,7 @@ var ccd3 = function(){
 		}
 		
 		if(!(this.title instanceof ccd3.Parts)){
-			if(this.title.text===undefined){
+			if(this.title.text === undefined || this.title.text === null){
 				this.title = new ccd3.Parts(this,this.title);
 			}else{
 				this.title = new ccd3.Parts.Label.Title(this,this.title);
@@ -437,14 +437,14 @@ var ccd3 = function(){
 	
 		if(this.chart_pattern === "xy"){
 			if(!(this.xLabel instanceof ccd3.Parts)){
-				if(this.xLabel.text===undefined){
+				if(this.xLabel.text === undefined || this.xLabel.text === null){
 					this.xLabel = new ccd3.Parts(this,this.xLabel);
 				}else{
 					this.xLabel = new ccd3.Parts.Label.xLabel(this,this.xLabel);
 				}
 			}
 			if(!(this.yLabel instanceof ccd3.Parts)){
-				if(this.yLabel.text===undefined){
+				if(this.yLabel.text === undefined || this.yLabel.text === null){
 					this.yLabel = new ccd3.Parts(this,this.yLabel);
 				}else{
 					this.yLabel = new ccd3.Parts.Label.yLabel(this,this.yLabel);
@@ -588,7 +588,7 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.prototype.init = function(chart,options){
 		var prop;
-		var defaults = this.get_defaults();
+		var defaults = this.get_defaults(chart,options);
 		
 		this.chart = chart;
 		// copy properties to this
@@ -776,7 +776,7 @@ var ccd3 = function(){
 			data.push(dataset[i].series_num);
 		}
 		
-		if(this.svg===undefined){
+		if(this.svg === undefined){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_legend");
 		}
 		
@@ -890,7 +890,7 @@ var ccd3 = function(){
 		};
 	};
 	ccd3.Parts.Tooltip.prototype.render = function(){
-		if(this.div!==undefined) return;
+		if(this.div !== undefined) return;
 		var that = this;
 		
 		// initialize format	
@@ -1142,13 +1142,13 @@ var ccd3 = function(){
 
 	ccd3.Parts.Menu = function(){ ccd3.Parts.apply(this,arguments); };
 	ccd3.Parts.Menu.prototype = new ccd3.Parts();
-	ccd3.Parts.Menu.prototype.get_defaults = function(){
+	ccd3.Parts.Menu.prototype.get_defaults = function(chart,options){
 		return {
 			menus: [ 
-				{ key:"csv", label:(this.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
+				{ key:"csv", label:(chart.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
 					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
 				} },
-				{ key:"reset", label:(this.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
+				{ key:"reset", label:(chart.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
@@ -1161,7 +1161,7 @@ var ccd3 = function(){
 					}
 					this.render(); 
 				}},
-				{ key:"close", label:(this.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"close", label:(chart.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
@@ -1192,7 +1192,7 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.render = function(){
 		var that = this;
 		
-		if(this.svg===undefined){
+		if(this.svg === undefined){
 			// render menu icon(triple line)
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_menu");
 			this.svg_icon = this.svg.append("g").attr("class","ccd3_menu_icon");
@@ -1293,7 +1293,7 @@ var ccd3 = function(){
 		var that = this;
 		
 		if(this.chart.svg === undefined) return; // chart is not ready
-		if(this.svg===undefined){
+		if(this.svg === undefined){
 			this.svg = this.chart.svg.append("g").attr("class","ccd3_overlay");
 			this.svg.append("rect").attr("class","ccd3_overlay_rect")
 				.attr("fill","white").attr("opacity",0.6);
@@ -1358,7 +1358,7 @@ var ccd3 = function(){
 	};
 	ccd3.Parts.Axis.prototype.render = function(){};
 	ccd3.Parts.Axis.prototype.init_format = function(){
-		if(this.format === undefined){
+		if(this.format === undefined || this.format === null){
 			if(this.scale_type === "date"){
 				this.format = ccd3.Util.default_date_format;
 			}else if(this.scale_type === "linear"){
@@ -1432,19 +1432,19 @@ var ccd3 = function(){
 				if(this.scale_type === "date"){
 					func = function(d){ return d.x; };
 				}else{
-					func = function(d){ return d.x + ((d.x0===undefined)? 0:d.x0); };
+					func = function(d){ return d.x + ((d.x0 === undefined || d.x0 === null)? 0:d.x0); };
 				}
 			}else if(direction === "y"){
 				if(this.scale_type === "date"){
 					func = function(d){ return d.y; };
 				}else{
-					func = function(d){ return d.y + ((d.y0===undefined)? 0:d.y0); };
+					func = function(d){ return d.y + ((d.y0 === undefined || d.y0 === null)? 0:d.y0); };
 				}
 			}
 			min = this.chart.dataset_manager.get_min(func);
 			max = this.chart.dataset_manager.get_max(func);
 			
-			if(min === undefined || max === undefined){
+			if(min === undefined || max === undefined || min === null || max === null){
 				min = undefined;
 				max = undefined;
 			}else if(this.direction !== this.chart.direction && this.domain_margin_type !== "grid"){
@@ -1467,8 +1467,8 @@ var ccd3 = function(){
 					max = max + this.min_step/2;
 				}
 			}
-			if(this.domain_min !== undefined){ min = this.domain_min; }
-			if(this.domain_max !== undefined){ max = this.domain_max; }
+			if(this.domain_min !== undefined && this.domain_min !== null){ min = this.domain_min; }
+			if(this.domain_max !== undefined && this.domain_max !== null){ max = this.domain_max; }
 			
 			if(direction === "x" || this.chart.direction === "y"){
 				domain = [min, max];
@@ -1668,7 +1668,7 @@ var ccd3 = function(){
 
 	};
 	ccd3.Parts.rAxis.prototype.init_format = function(){
-		if(this.format===undefined){
+		if(this.format === undefined || this.format === null){
 			this.format = ccd3.Util.default_numeric_format;
 		}
 	};
@@ -1763,7 +1763,7 @@ var ccd3 = function(){
 		
 	};
 	ccd3.Parts.aAxis.prototype.init_format = function(){
-		if(this.format===undefined){
+		if(this.format === undefined || this.format === null){
 			this.format = function(d){ return d; };
 		}
 	};
@@ -2682,7 +2682,7 @@ var ccd3 = function(){
 		var cHeight = this.chart.series_container.height;
 		this.color = this.chart._color(i);
 		
-		if(this.domain_z_max !== undefined){
+		if(this.domain_z_max !== undefined && this.domain_z_max !== null){
 			zMax = this.domain_z_max;
 		}else{
 			zMax = this.chart.dataset_manager.get_max(function(d){
@@ -2691,7 +2691,7 @@ var ccd3 = function(){
 				return (xpos >= 0 && xpos <= cWidth && ypos >= 0 && ypos <= cHeight)? d.z:null;
 			});
 		}
-		if(this.domain_z_min !== undefined){
+		if(this.domain_z_min !== undefined && this.domain_z_min !== null){
 			zMin = this.domain_z_min;
 		}else{
 			zMin = this.chart.dataset_manager.get_min(function(d){
@@ -3340,16 +3340,16 @@ var ccd3 = function(){
 		// set default properties
 		for(i=0,len=dataset.length;i<len;i++){
 			dataset[i].series_num = i;
-			if(dataset[i].series_type === undefined){
+			if(dataset[i].series_type === undefined || dataset[i].series_type === null){
 				dataset[i].series_type = this.chart.default_series_type;
 			}
-			if(dataset[i].name === undefined){
+			if(dataset[i].name === undefined || dataset[i].name === null){
 				dataset[i].name = "series"+(i+1);
 			}
-			if(dataset[i].visible === undefined){
+			if(dataset[i].visible === undefined || dataset[i].visible === null){
 				dataset[i].visible = true;
 			}
-			if(dataset[i].color !== undefined){
+			if(dataset[i].color !== undefined && dataset[i].color !== null){
 				this.chart.color_palette[i] = dataset[i].color;
 			}
 		}
@@ -3357,7 +3357,7 @@ var ccd3 = function(){
 		// check dataset
 		var st_ar = []; // st = series_type
 		for(i=0,len=dataset.length;i<len;i++){
-			if(dataset[i].series_type !== undefined && !(type_info.hasOwnProperty(dataset[i].series_type))){
+			if(dataset[i].series_type !== undefined && dataset[i].series_type !== null && !(type_info.hasOwnProperty(dataset[i].series_type))){
 				throw new Error("invalid series_type");
 			}
 			st_ar.push(dataset[i].series_type);
@@ -3447,7 +3447,7 @@ var ccd3 = function(){
 			for(var k=1;k<ar.length;k++){
 				if(ar[k]===ar[k-1]){ continue; }
 				step = Math.abs(ar[k] - ar[k-1]);
-				if(min===undefined){
+				if(min === undefined){
 					min = step;
 				}else{
 					min = (min > step)? step : min;
@@ -3609,9 +3609,9 @@ var ccd3 = function(){
 				for(j=0;j<dataset[i].values.length;j++){
 					row = [dataset[i].name];
 					d = dataset[i].values[j];
-					if(d.x!==undefined){ row.push(xFormat(ccd3.Util.extract_axis_text(d.x))); }else{ row.push(""); }
-					if(d.y!==undefined){ row.push(yFormat(ccd3.Util.extract_axis_text(d.y))); }else{ row.push(""); }
-					if(d.z!==undefined){ row.push(zFormat(ccd3.Util.extract_axis_text(d.z))); }else{ row.push(""); }
+					if(d.x !== undefined && d.x !== null){ row.push(xFormat(ccd3.Util.extract_axis_text(d.x))); }else{ row.push(""); }
+					if(d.y !== undefined && d.y !== null){ row.push(yFormat(ccd3.Util.extract_axis_text(d.y))); }else{ row.push(""); }
+					if(d.z !== undefined && d.z !== null){ row.push(zFormat(ccd3.Util.extract_axis_text(d.z))); }else{ row.push(""); }
 					ar.push(row);
 				}
 			}
@@ -3625,7 +3625,7 @@ var ccd3 = function(){
 		return csv;
 	};
 	ccd3.DatasetManager.prototype.download_as_csv = function(file_contents,file_name){
-		if(file_name===undefined){ file_name = "data.csv"; }
+		if(file_name === undefined || file_name === null){ file_name = "data.csv"; }
 		
 		var f = d3.select("body").append("form").attr("method","POST").attr("action",ccd3.options.csv_echo_path());
 		f.append("input").attr("name","file_name").attr("value",file_name).attr("type","hidden");
@@ -3791,26 +3791,26 @@ var ccd3 = function(){
 			dict = {};
 			for(var j=0;j<ar.length;j++){
 				value = {};
-				if(rule.x !== undefined){
+				if(rule.x !== undefined && rule.x !== null){
 					v = ar[j][rule.x];
 					value.x = (rule.x_format)? rule.x_format(v) : v;
 				}
-				if(rule.y !== undefined){
+				if(rule.y !== undefined && rule.y !== null){
 					v = ar[j][rule.y];
 					value.y = (rule.y_format)? rule.y_format(v) : v;
 				}
-				if(rule.z !== undefined){
+				if(rule.z !== undefined && rule.z !== null){
 					v = ar[j][rule.z];
 					value.z = (rule.z_format)? rule.z_format(v) : v;
 				}
-				if(rule.label !== undefined){
+				if(rule.label !== undefined && rule.label !== null){
 					v = ar[j][rule.label];
 					value.label = (rule.label_format)? rule.label_format(v) : v;
 				}
 				if(rule.include_source){
 					value._source = ccd3.Util.copy(ar[j]);
 				}
-				if(rule.group !== undefined){
+				if(rule.group !== undefined && rule.group !== null){
 					if(!dict[ar[j][rule.group]]){
 						dict[ar[j][rule.group]] = [];
 					}
