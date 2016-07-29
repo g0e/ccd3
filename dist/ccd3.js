@@ -2221,6 +2221,7 @@ var ccd3 = function(){
 			text_xy_func = function(d){
 				var y = width2/2 + this.getBBox().height/2;
 				var x = hScale(d.x) - this.getBBox().width;
+				if(x < 0){ x = 0; }
 				return "translate("+x+","+y+")";
 			};
 		}
@@ -3179,7 +3180,7 @@ var ccd3 = function(){
 					var text_height = this.getBBox().height;
 					var arc_width = Math.abs(Math.cos(d.startAngle) - Math.cos(d.endAngle))*that.radius/2;
 					var arc_height = Math.abs(Math.sin(d.startAngle) - Math.sin(d.endAngle))*that.radius/2;
-					if(arc_width>=text_width || arc_height>=text_height){
+					if(arc_width>=text_width || arc_height>=text_height || (d.endAngle - d.startAngle) >= 3.14){
 						return "visible";
 					}else{
 						return "hidden";

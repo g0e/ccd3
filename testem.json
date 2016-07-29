@@ -1,10 +1,13 @@
 {
-	"test_page" : "test.mustache",
+	"framework": "jasmine",
 	"serve_files" : [
-		"dist/ccd3.js",
-		"dist/dataset_sample.js",
+		"src/ccd3.js",
+		"src/dataset_sample.js",
 		"vendor/d3.v3/d3.v3.js",
 		"tests/*.js"
+	],
+	"css_files": [
+		"src/ccd3.css"
 	]
 }
 

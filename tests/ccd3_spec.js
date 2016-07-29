@@ -1,5 +1,10 @@
 var seq = 1;
+var initialized = false;
 var render_test = function(cond,options){
+	if(!initialized){
+		d3.select("body").append("div").attr("id", "chart_div");
+		initialized = true;
+	}
 	d3.select("#chart_div").append("div").attr("id","chart"+seq).style("margin","20px").style("float","left");
 	var data = (new ccd3t.DatasetGenerator(cond)).generate();
 	var chart = new ccd3.Chart("chart"+seq,data);
