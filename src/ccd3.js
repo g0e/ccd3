@@ -56,7 +56,27 @@ var ccd3 = function(){
 	ccd3.options.csv_echo_path = function(){
 		return ccd3.options.ccd3_path + ccd3.options.echo_script;
 	};
+	ccd3.options.lang = "en";  // en or ja
+	ccd3.options.language_text = {
+		ja: {
+			"Sort": "ソート",
+			"Sort by X-Axis": "ソート(X軸)",
+			"Sort by Y-Axis": "ソート(Y軸)",
+			"Download CSV": "CSV形式でダウンロード",
+			"Refresh Chart": "チャートを再描画",
+			"Close Menu": "メニューを閉じる",
+		}
+	};
+	ccd3._ = function(txt){
+		var opt = ccd3.options;
+		if(opt.language_text[opt.lang] && opt.language_text[opt.lang][txt]){
+			return opt.language_text[opt.lang][txt];
+		}else{
+			return txt;
+		}
+	};
 	
+
 	/* ------------------------------------------------------------------ */
 	/*  ccd3.Charts                                                       */
 	/* ------------------------------------------------------------------ */
@@ -102,7 +122,6 @@ var ccd3 = function(){
 		this.default_series_type = "scatter";
 		this.stack_type = "zero"; // use as args of stack.offset
 		this.dataset_to_csv_array = undefined;
-		this.lang = "en"; // menu language("ja","en")
 		
 		// ccd3.DatasetLoader
 		this.loader = new ccd3.DatasetLoader(this);
@@ -110,7 +129,6 @@ var ccd3 = function(){
 		if(dataset !== undefined){
 			this.dataset = dataset;
 		}
-		
 	};
 	
 	ccd3.Chart.prototype.setup_options = function(options){
@@ -362,7 +380,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","y",data.asc);
 							data.asc = !(data.asc);
-						},label: (this.lang == "ja")?"ソート(X軸)":"Sort by X-Axis"},"sort_x_by_y"
+						},label: ccd3._("Sort by X-Axis")},"sort_x_by_y"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -370,7 +388,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("x","z",data.asc);
 							data.asc = !(data.asc);
-						},label: (this.lang == "ja")?"ソート(X軸)":"Sort by X-Axis"},"sort_x_by_z"
+						},label: ccd3._("Sort by X-Axis")},"sort_x_by_z"
 					);
 				}
 			}
@@ -380,7 +398,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","x",data.asc);
 							data.asc = !(data.asc);
-						},label: (this.lang == "ja")?"ソート(Y軸)":"Sort by Y-Axis"},"sort_y_by_x"
+						},label: ccd3._("Sort by Y-Axis")},"sort_y_by_x"
 					);
 				}
 				if(z_scale_type === "linear"){
@@ -388,7 +406,7 @@ var ccd3 = function(){
 						func: function(data){
 							this.sort_domain("y","z",data.asc);
 							data.asc = !(data.asc);
-						},label: (this.lang == "ja")?"ソート(Y軸)":"Sort by Y-Axis"},"sort_y_by_z"
+						},label: ccd3._("Sort by Y-Axis")},"sort_y_by_z"
 					);
 				}
 			}
@@ -402,7 +420,7 @@ var ccd3 = function(){
 						this.series[0].sort = "asc";
 					}
 					this.render({dont_reset_domain:true});
-				},label: (this.lang == "ja")?"ソート":"Sort"},"sort"
+				},label: ccd3._("Sort")},"sort"
 			);
 		}else if(this.chart_pattern === "ra"){
 			this.rAxis.init_scale();
@@ -1145,10 +1163,10 @@ var ccd3 = function(){
 	ccd3.Parts.Menu.prototype.get_defaults = function(chart,options){
 		return {
 			menus: [ 
-				{ key:"csv", label:(chart && chart.lang == "ja")?"CSV形式でダウンロード":"Download CSV", func:function(){ 
+				{ key:"csv", label: ccd3._("Download CSV"), func:function(){ 
 					this.dataset_manager.download_as_csv(this.dataset_manager.to_csv()); 
 				} },
-				{ key:"reset", label:(chart && chart.lang == "ja")?"チャートを再描画":"Refresh Chart", func:function(){
+				{ key:"reset", label: ccd3._("Refresh Chart"), func:function(){
 					for(var i=0,len=this.dataset.length;i<len;i++){
 						this.dataset[i].visible = true;
 					}
@@ -1161,7 +1179,7 @@ var ccd3 = function(){
 					}
 					this.render(); 
 				}},
-				{ key:"close", label:(chart && chart.lang == "ja")?"メニューを閉じる":"Close Menu", func:function(){ this.menu.toggle_menu(); }}
+				{ key:"close", label: ccd3._("Close Menu"), func:function(){ this.menu.toggle_menu(); }}
 			],
 			opened: false,
 			font_size: 10,
