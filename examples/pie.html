@@ -2,11 +2,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../src/ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../src/ccd3.js"></script>
-		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
@@ -16,11 +13,11 @@ window.onload = function(){
 		var cond = {
 			series_cnt:1,
 			values_cnt:7,
-			x: ccd3t.sequence_str,
-			y: ccd3t.random_float
+			x: ccd3.samples.sequence_str,
+			y: ccd3.samples.random_float
 		};
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "title test";
 		c.default_series_type = "pie";
 		c.menu.show = true;
@@ -35,11 +32,11 @@ window.onload = function(){
 		var cond = {
 			series_cnt:1,
 			values_cnt:7,
-			x: ccd3t.sequence_str,
-			y: ccd3t.random_float
+			x: ccd3.samples.sequence_str,
+			y: ccd3.samples.random_float
 		};
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "title test";
 		c.default_series_type = "pie";
 		c.tooltip.show = false;

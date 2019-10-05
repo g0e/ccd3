@@ -2,19 +2,16 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../ccd3.js"></script>
-		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
 	(function(){
 		var div_id = "chart1-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({scale:0.01,cnt:50});
-		var c = new ccd3.Chart(div_id,data);
+		var data = ccd3.samples.random_diff({scale:0.01,cnt:50});
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "Line Chart Sample1";
 		c.default_series_type = "scatter";
 		c.series_options.scatter.point_radius = 8;

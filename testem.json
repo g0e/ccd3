@@ -1,13 +1,8 @@
 {
 	"framework": "jasmine",
 	"serve_files" : [
-		"src/ccd3.js",
-		"src/dataset_sample.js",
-		"vendor/d3.v3/d3.v3.js",
+		"dist/bundle.js",
 		"tests/*.js"
-	],
-	"css_files": [
-		"src/ccd3.css"
 	]
 }
 

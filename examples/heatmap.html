@@ -2,21 +2,18 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../dist/ccd3.js"></script>
-		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
 	(function(){
 		var div_id = "chart1-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:25, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:25, x:ccd3.samples.matrix_x_str, y:ccd3.samples.matrix_y_str, z:ccd3.samples.random_int }
 		)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "5x5, xy-label";
 		c.default_series_type = "heatmap";
 		c.show_values = "always";
@@ -28,10 +25,10 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart1-2";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:400, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:400, x:ccd3.samples.matrix_x_str, y:ccd3.samples.matrix_y_str, z:ccd3.samples.random_int }
 		)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "20x20, xy-label";
 		c.default_series_type = "heatmap";
 		c.menu.show = true;
@@ -43,10 +40,10 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart2-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:25, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:25, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int }
 		)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "5x5, xy-int";
 		c.default_series_type = "heatmap";
 		c.show_values = "always";
@@ -58,10 +55,10 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart2-2";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:400, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:400, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int }
 		)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "20x20, xy-int";
 		c.default_series_type = "heatmap";
 		c.height = 360;
@@ -72,10 +69,10 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart3-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:100, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:100, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int }
 		)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "10x10, custome color";
 		c.default_series_type = "heatmap";
 		c.series_options.heatmap.low_color = "white";
@@ -88,8 +85,8 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart4-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = (new ccd3t.DatasetGenerator(
-			{ series_cnt:1, values_cnt:100, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }
+		var data = (new ccd3.samples.DatasetGenerator(
+			{ series_cnt:1, values_cnt:100, x:ccd3.samples.matrix_x_str, y:ccd3.samples.matrix_y_str, z:ccd3.samples.random_int }
 		)).generate();
 		values = data[0].values
 		for(var i=0;i<values.length;i++){
@@ -97,7 +94,7 @@ window.onload = function(){
 				values[i].y= "a___004";
 			}
 		}
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title.text = "customize event test";
 		c.default_series_type = "heatmap";
 		c.series_options.heatmap.low_color = "white";

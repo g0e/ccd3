@@ -2,20 +2,17 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../dist/ccd3.js"></script>
-		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
 	(function(){
 		var div_id = "chart1-1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var cond = { values_cnt: 5, x: ccd3t.sequence_str, y: ccd3t.random_int };
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var cond = { values_cnt: 5, x: ccd3.samples.sequence_str, y: ccd3.samples.random_int };
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		var options = {
 			height:360,width:360,
 			title: { text: "title test" },
@@ -27,9 +24,9 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart1-2";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var cond = { series_cnt:1, values_cnt: 3, x: ccd3t.sequence_str, y: ccd3t.random_int };
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var cond = { series_cnt:1, values_cnt: 3, x: ccd3.samples.sequence_str, y: ccd3.samples.random_int };
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		var options = {
 			height:200,width:200,
 			title: { text: "title test" },
@@ -44,10 +41,10 @@ window.onload = function(){
 		var cond = { 
 			series_cnt:5, values_cnt: 30, 
 			random_ceil: 10000, random_floor: 1000,
-			x: ccd3t.sequence_str, y: ccd3t.random_int 
+			x: ccd3.samples.sequence_str, y: ccd3.samples.random_int 
 		};
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		var c = new ccd3.Chart(div_id,data);
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		var options = {
 			height:640,width:480,
 			title: { text: "title test" },

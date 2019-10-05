@@ -1,14 +1,11 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<link rel="stylesheet" href="./../ccd3/ccd3.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../ccd3/ccd3.js"></script>
-		<script type="text/javascript" src="./../ccd3/dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 			window.onload = function(){
-				var data = ccd3_dataset.random_diff(); // sample dataset
-				var c = new ccd3.Chart("chart",data); 
+				var data = ccd3.samples.random_diff(); // sample dataset
+				var c = new ccd3.ccd3.Chart("chart",data); 
 				/* setting customize options here */
 				c.render(); // render chart
 			};

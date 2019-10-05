@@ -8,17 +8,18 @@ http://opensource.org/licenses/mit-license.php
 */
 
 // for JSHint
-/* global d3 */
 /* exported ccd3 */
+import * as d3 from "d3";
+
 
 /* ================================================================== */
 /*  ccd3 definition                                                   */
 /* ================================================================== */
-var ccd3 = function(){
+const ccd3 = function(){
 	"use strict";
 	
 	var ccd3 = {
-		version: "1.2.4"
+		version: "2.0.0"
 	};
 	
 	/* ------------------------------------------------------------------ */
@@ -3864,3 +3865,5 @@ var ccd3 = function(){
 
 	return ccd3;
 }();
+
+export default ccd3;

@@ -3,10 +3,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=8;IE=9"/>
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../ccd3.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../ccd3.js"></script>
-		<script type="text/javascript" src="./../dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<style type="text/css">
 <!--
 #charts > div{
@@ -17,7 +14,7 @@
 		<script type="text/javascript">
 <!--
 window.onload = function(){
-	ccd3.options.echo_script = "server/echo_csv.rb";
+	ccd3.ccd3.options.echo_script = "server/echo_csv.rb";
 	(function(){
 		var div_id = "chart1";
 		/* prepare dataset */
@@ -25,24 +22,24 @@ window.onload = function(){
 		var cond = {
 			series_cnt:3,
 			values_cnt:20,
-			x: ccd3t.sequence_str,
-			//y: ccd3t.random_int,
-			y: ccd3t.random_walk_int,
-			//y: ccd3t.matrix_y_str,
-			//z: ccd3t.random_int
+			x: ccd3.samples.sequence_str,
+			//y: ccd3.samples.random_int,
+			y: ccd3.samples.random_walk_int,
+			//y: ccd3.samples.matrix_y_str,
+			//z: ccd3.samples.random_int
 		};
-		var data = (new ccd3t.DatasetGenerator(cond)).generate();
-		//ccd3.Util.swap_dataset_xy(data);
-		//var data = ccd3_dataset.random_weekday({cnt:2});
-		//var data = ccd3_dataset.random_xylabel({cnt:10});
-		//var data = ccd3_dataset.random_xylabel({series_num:3, cnt:20});
-		//data = ccd3.Util.swap_dataset_xy(data);
+		var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+		//ccd3.ccd3.Util.swap_dataset_xy(data);
+		//var data = ccd3.samples.random_weekday({cnt:2});
+		//var data = ccd3.samples.random_xylabel({cnt:10});
+		//var data = ccd3.samples.random_xylabel({series_num:3, cnt:20});
+		//data = ccd3.ccd3.Util.swap_dataset_xy(data);
 		//data[0].color = "#999999";
 		//data[0].series_type = "bubble";
 		//data[1].series_type = "bar";
 		/* create Chart Object */
 		
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		//c.show_values = "always";
 		c.menu.show = true;
 		//c.zoom.use = false;

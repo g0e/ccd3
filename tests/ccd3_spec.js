@@ -6,8 +6,8 @@ var render_test = function(cond,options){
 		initialized = true;
 	}
 	d3.select("#chart_div").append("div").attr("id","chart"+seq).style("margin","20px").style("float","left");
-	var data = (new ccd3t.DatasetGenerator(cond)).generate();
-	var chart = new ccd3.Chart("chart"+seq,data);
+	var data = (new ccd3.samples.DatasetGenerator(cond)).generate();
+	var chart = new ccd3.ccd3.Chart("chart"+seq,data);
 	chart.setup_options(options);
 	chart.render();
 	seq++;
@@ -15,7 +15,7 @@ var render_test = function(cond,options){
 };
 var create_chart = function(){
 	d3.select("#chart_div").append("div").attr("id","chart"+seq).style("margin","20px").style("float","left");
-	var chart = new ccd3.Chart("chart"+seq);
+	var chart = new ccd3.ccd3.Chart("chart"+seq);
 	seq++;
 	return chart;
 };
@@ -38,9 +38,9 @@ describe("Scatter charts", function(){
 	it("don't throw with various axis.",function(){
 		create_section("Scatter Chart Tests");
 		expect(function(){
-			render_test({ x:ccd3t.random_int, y:ccd3t.random_int }, options);
-			render_test({ x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
-			render_test({ x:ccd3t.sequence_date, y:ccd3t.random_int }, options);
+			render_test({ x:ccd3.samples.random_int, y:ccd3.samples.random_int }, options);
+			render_test({ x:ccd3.samples.sequence_str, y:ccd3.samples.random_int }, options);
+			render_test({ x:ccd3.samples.sequence_date, y:ccd3.samples.random_int }, options);
 		}).not.toThrow();
 	});
 });
@@ -54,17 +54,17 @@ describe("Bar charts", function(){
 	it("don't throw with int,date,str xAxis.",function(){
 		create_section("Bar Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, x:ccd3t.sequence_int, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:5, x:ccd3t.sequence_date, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, x:ccd3.samples.sequence_int, y:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_date, y:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:1, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int }, options);
 		}).not.toThrow();
 	});
 	
 	it("don't throw with int,date,str yAxis.",function(){
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, y:ccd3t.sequence_int, x:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:5, y:ccd3t.sequence_date, x:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:1, y:ccd3t.sequence_str, x:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, y:ccd3.samples.sequence_int, x:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, y:ccd3.samples.sequence_date, x:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:1, y:ccd3.samples.sequence_str, x:ccd3.samples.random_int }, options);
 
 		}).not.toThrow();
 	});
@@ -79,23 +79,23 @@ describe("StackedBar charts", function(){
 	it("don't throw with int,date,str xAxis.",function(){
 		create_section("StackedBar Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, x:ccd3t.sequence_int, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:5, x:ccd3t.sequence_date, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, x:ccd3.samples.sequence_int, y:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_date, y:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with int,date,str yAxis.",function(){
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, y:ccd3t.sequence_int, x:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:5, y:ccd3t.sequence_date, x:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:10, y:ccd3t.sequence_str, x:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, y:ccd3.samples.sequence_int, x:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, y:ccd3.samples.sequence_date, x:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, y:ccd3.samples.sequence_str, x:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with stack_type='expand'.",function(){
 		expect(function(){
 			options.stack_type = "expand";
-			render_test({ series_cnt:3, values_cnt:5, x:ccd3t.sequence_date, y:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:5, y:ccd3t.sequence_date, x:ccd3t.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_date, y:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:5, y:ccd3.samples.sequence_date, x:ccd3.samples.random_int }, options);
 		}).not.toThrow();
 	});
 });
@@ -109,16 +109,16 @@ describe("Line charts", function(){
 	it("don't throw with int,date,str xAxis.",function(){
 		create_section("Line Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:30, x:ccd3t.sequence_int, y:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:30, x:ccd3t.sequence_date, y:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_walk_int }, options);
+			render_test({ series_cnt:1, values_cnt:30, x:ccd3.samples.sequence_int, y:ccd3.samples.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:30, x:ccd3.samples.sequence_date, y:ccd3.samples.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3.samples.sequence_str, y:ccd3.samples.random_walk_int }, options);
 			}).not.toThrow();
 	});
 	it("don't throw with int,date,str yAxis.",function(){
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:30, y:ccd3t.sequence_int, x:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:30, y:ccd3t.sequence_date, x:ccd3t.random_walk_int }, options);
-			render_test({ series_cnt:3, values_cnt:10, y:ccd3t.sequence_str, x:ccd3t.random_walk_int }, options);
+			render_test({ series_cnt:1, values_cnt:30, y:ccd3.samples.sequence_int, x:ccd3.samples.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:30, y:ccd3.samples.sequence_date, x:ccd3.samples.random_walk_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, y:ccd3.samples.sequence_str, x:ccd3.samples.random_walk_int }, options);
 			}).not.toThrow();
 	});
 });
@@ -132,10 +132,10 @@ describe("Bubble charts", function(){
 	it("don't throw with various Axis",function(){
 		create_section("Bubble Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:30, x:ccd3t.sequence_int, y:ccd3t.random_walk_int, z:ccd3t.random_int }, options);
-			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_date, y:ccd3t.random_walk_int, z:ccd3t.random_int }, options);
-			render_test({ series_cnt:1, values_cnt:25, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int }, options);
-			render_test({ series_cnt:1, values_cnt:36, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:30, x:ccd3.samples.sequence_int, y:ccd3.samples.random_walk_int, z:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3.samples.sequence_date, y:ccd3.samples.random_walk_int, z:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:25, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:36, x:ccd3.samples.matrix_x_str, y:ccd3.samples.matrix_y_str, z:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 });
@@ -150,8 +150,8 @@ describe("Heatmap charts", function(){
 	it("don't throw with various Axis",function(){
 		create_section("Heatmap Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:25, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int }, options);
-			render_test({ series_cnt:1, values_cnt:100, x:ccd3t.matrix_x_str, y:ccd3t.matrix_y_str, z:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:25, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:100, x:ccd3.samples.matrix_x_str, y:ccd3.samples.matrix_y_str, z:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 });
@@ -165,9 +165,9 @@ describe("Pie charts", function(){
 	it("don't throw with int,str xAxis.",function(){
 		create_section("Pie Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, x:ccd3t.sequence_int, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, x:ccd3.samples.sequence_int, y:ccd3.samples.random_int }, options);
 			options.title = { text:"Title Test" };
-			render_test({ series_cnt:1, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:10, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 });
@@ -181,9 +181,9 @@ describe("Radar charts", function(){
 	it("don't throw with int,str xAxis.",function(){
 		create_section("Radar Chart Tests");
 		expect(function(){
-			render_test({ series_cnt:1, values_cnt:5, x:ccd3t.sequence_int, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:1, values_cnt:5, x:ccd3.samples.sequence_int, y:ccd3.samples.random_int }, options);
 			options.title = { text:"Title Test" };
-			render_test({ series_cnt:3, values_cnt:10, x:ccd3t.sequence_str, y:ccd3t.random_int }, options);
+			render_test({ series_cnt:3, values_cnt:10, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int }, options);
 			}).not.toThrow();
 	});
 });
@@ -192,8 +192,8 @@ describe("Labels", function(){
 	var cond = {
 		series_cnt:6,
 		values_cnt:10,
-		x:ccd3t.sequence_str,
-		y:ccd3t.random_int 
+		x:ccd3.samples.sequence_str,
+		y:ccd3.samples.random_int 
 	};
 	var options = {
 		width:360,height:360,
@@ -222,9 +222,9 @@ describe("When updating dataset, ", function(){
 		create_section("Chart Updating Tests");
 		expect(function(){
 			options.default_series_type = "scatter";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			cond.series_cnt = 2;
@@ -235,9 +235,9 @@ describe("When updating dataset, ", function(){
 		create_section("Chart Updating Tests");
 		expect(function(){
 			options.default_series_type = "bar";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
@@ -249,9 +249,9 @@ describe("When updating dataset, ", function(){
 	it("StackedBar chart don't throw.",function(){
 		expect(function(){
 			options.default_series_type = "stackedbar";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
@@ -263,9 +263,9 @@ describe("When updating dataset, ", function(){
 	it("Line chart don't throw.",function(){
 		expect(function(){
 			options.default_series_type = "line";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
@@ -277,9 +277,9 @@ describe("When updating dataset, ", function(){
 	it("Bubble chart don't throw.",function(){
 		expect(function(){
 			options.default_series_type = "bubble";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int, z:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int, z:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
@@ -291,10 +291,10 @@ describe("When updating dataset, ", function(){
 	it("Heatmap chart don't throw.",function(){
 		expect(function(){
 			options.default_series_type = "heatmap";
-			cond = { series_cnt:1, values_cnt:25, x:ccd3t.matrix_x_int, y:ccd3t.matrix_y_int, z:ccd3t.random_int };
+			cond = { series_cnt:1, values_cnt:25, x:ccd3.samples.matrix_x_int, y:ccd3.samples.matrix_y_int, z:ccd3.samples.random_int };
 			chart = render_test(cond, options);
 			cond.values_cnt = 36;
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
 		}).not.toThrow();
@@ -302,10 +302,10 @@ describe("When updating dataset, ", function(){
 	it("Pie chart don't throw.",function(){
 		expect(function(){
 			options.default_series_type = "pie";
-			cond = { series_cnt:1, values_cnt:5, x:ccd3t.random_str, y:ccd3t.random_int };
+			cond = { series_cnt:1, values_cnt:5, x:ccd3.samples.random_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
 			cond.values_cnt = 3;
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();
 		}).not.toThrow();
@@ -313,9 +313,9 @@ describe("When updating dataset, ", function(){
 	it("Radar chart don't throw",function(){
 		expect(function(){
 			options.default_series_type = "radar";
-			cond = { series_cnt:3, values_cnt:5, x:ccd3t.sequence_str, y:ccd3t.random_int };
+			cond = { series_cnt:3, values_cnt:5, x:ccd3.samples.sequence_str, y:ccd3.samples.random_int };
 			chart = render_test(cond, options);
-			generator = new ccd3t.DatasetGenerator(cond);
+			generator = new ccd3.samples.DatasetGenerator(cond);
 			cond.series_cnt = 5;
 			chart.set_dataset(generator.generate(cond)); 
 			chart.render();

@@ -1,7 +1,8 @@
 // for JSHint
 /* global d3,ccd3 */
+import ccd3 from "./ccd3";
 
-var ccd3t = function(){
+const tools = function(){
 	"use strict";
 	
 	var ccd3t = {};
@@ -110,16 +111,7 @@ var ccd3t = function(){
 		}
 	};
 
-	return ccd3t;
-}();
-
-
-// sample dataset generator for ccd3 examples
-var ccd3_dataset = function(){
-	"use strict";
-	ccd3_dataset = {};
-	
-	ccd3_dataset.random_diff = function(options){
+	ccd3t.random_diff = function(options){
 		if(options===undefined){ options={}; }
 		var series_num = (options.series_num)? options.series_num : 5;
 		var scale = (options.scale)? options.scale : 100;
@@ -144,7 +136,7 @@ var ccd3_dataset = function(){
 		return dataset;
 	};
 	
-	ccd3_dataset.sin_cos_tan = function(options){
+	ccd3t.sin_cos_tan = function(options){
 		if(options===undefined){ options={}; }
 		var cnt = (options.cnt)? options.cnt : 100;
 		var sin = [];
@@ -167,7 +159,7 @@ var ccd3_dataset = function(){
 		];
 	};
 	
-	ccd3_dataset.random_weekday = function(options){
+	ccd3t.random_weekday = function(options){
 		if(options===undefined){ options={}; }
 		var series_num = (options.series_num)? options.series_num : 5;
 		var scale = (options.scale)? options.scale : 100;
@@ -191,7 +183,7 @@ var ccd3_dataset = function(){
 
 	};
 	
-	ccd3_dataset.random_xylabel = function(options){
+	ccd3t.random_xylabel = function(options){
 		if(options===undefined){ options={}; }
 		var scale = (options.scale)? options.scale : 100;
 		var cnt = (options.cnt)? options.cnt : 10;
@@ -211,7 +203,7 @@ var ccd3_dataset = function(){
 		}
 		return [{values:series}];
 	};
-	ccd3_dataset.random_xyz_grid = function(options){
+	ccd3t.random_xyz_grid = function(options){
 		if(options===undefined){ options={}; }
 		var scale = (options.scale)? options.scale : 100;
 		var cnt = (options.cnt)? options.cnt : 10;
@@ -232,7 +224,7 @@ var ccd3_dataset = function(){
 		return [{values:series}];
 	};
 
-	ccd3_dataset.random_xyz = function(options){
+	ccd3t.random_xyz = function(options){
 		if(options===undefined){ options={}; }
 		var series_num = (options.series_num)? options.series_num : 5;
 		var scale = (options.scale)? options.scale : 100;
@@ -250,7 +242,7 @@ var ccd3_dataset = function(){
 		return dataset;
 	};
 	
-	ccd3_dataset.correlative_xyz = function(options){
+	ccd3t.correlative_xyz = function(options){
 		if(options===undefined){ options={}; }
 		var series_num = (options.series_num)? options.series_num : 5;
 		var scale = (options.scale)? options.scale : 100;
@@ -271,5 +263,7 @@ var ccd3_dataset = function(){
 		return dataset;
 	};
 	
-	return ccd3_dataset;
+	return ccd3t;
 }();
+
+export default tools;

@@ -2,20 +2,17 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Test ccd3</title>
-		<link rel="stylesheet" href="./../dist/ccd3.css" type="text/css" />
 		<link rel="stylesheet" href="./examples.css" type="text/css" />
-		<script type="text/javascript" src="./../vendor/d3.v3/d3.v3.js"></script>
-		<script type="text/javascript" src="./../dist/ccd3.js"></script>
-		<script type="text/javascript" src="./../dist/dataset_sample.js"></script>
+		<script type="text/javascript" src="./../dist/bundle.js"></script>
 		<script type="text/javascript">
 <!--
 window.onload = function(){
 	(function(){
 		var div_id = "chart1";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:5,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:5,cnt:10});
 		for(var i=0;i<data.length;i++){ data[i].series_type=(i<3)? "bar":"line" ; }
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "Bar & Line Chart Sample";
 		c.render();
 	})();
@@ -23,9 +20,9 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart2";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:5,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:5,cnt:10});
 		for(var i=0;i<data.length;i++){ data[i].series_type=(i<3)? "stackedbar":"line" ; }
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "StackedBar & Line Chart Sample";
 		c.render();
 	})();
@@ -33,9 +30,9 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart3";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:5,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:5,cnt:10});
 		for(var i=0;i<data.length;i++){ data[i].series_type=(i<3)? "bar":"scatter" ; }
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "Bar & Scatter Chart Sample";
 		c.render();
 	})();
@@ -43,9 +40,9 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart4";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:5,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:5,cnt:10});
 		for(var i=0;i<data.length;i++){ data[i].series_type=(i<3)? "bar":"bubble" ; }
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "Bar & Bubble Chart Sample";
 		c.render();
 	})();
@@ -53,9 +50,9 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart5";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:5,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:5,cnt:10});
 		for(var i=0;i<data.length;i++){ data[i].series_type=(i<3)? "line":"scatter" ; }
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "Scatter & Line Chart Sample";
 		c.render();
 	})();
@@ -63,12 +60,12 @@ window.onload = function(){
 	(function(){
 		var div_id = "chart6";
 		d3.select("#charts").append("div").attr("id",div_id).style("margin","20px");
-		var data = ccd3_dataset.random_diff({series_num:4,cnt:10});
+		var data = ccd3.samples.random_diff({series_num:4,cnt:10});
 		data[0].series_type = "bar";
 		data[1].series_type = "line";
 		data[2].series_type = "bubble";
 		data[3].series_type = "scatter";
-		var c = new ccd3.Chart(div_id,data);
+		var c = new ccd3.ccd3.Chart(div_id,data);
 		c.title = "4 Types Complex Chart Sample";
 		c.render();
 	})();
