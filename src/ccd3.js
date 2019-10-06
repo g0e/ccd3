@@ -1,14 +1,12 @@
 /**
 ccd3
 
-Copyright (c) 2014-2015 Masafumi.OSOGOE
+Copyright (c) 2014-2019 Masafumi.OSOGOE
 
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 */
 
-// for JSHint
-/* exported ccd3 */
 import * as d3 from "d3";
 
 
@@ -47,6 +45,7 @@ const ccd3 = function(){
 	// get script's own path
 	ccd3.options.ccd3_path = (function(){
 		var scripts=document.getElementsByTagName('script');
+		if(scripts.length === 0){ return ""; }
 		var src = scripts[scripts.length-1].src;
 		var paths = src.split("/");
 		if(paths.length==1){ return src; }
